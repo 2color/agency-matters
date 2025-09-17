@@ -3,8 +3,8 @@ name: Build and Deploy to GitHub Pages
 # Explicitly declare permissions
 permissions:
   contents: read
-  pull-requests: write
-  statuses: write
+  pages: write
+  id-token: write
 
 on:
   push:
