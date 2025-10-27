@@ -11,9 +11,10 @@ It sports the following key features:
 - Self-contained multi-platform binary
 - Has been battle tested
 - Encrypted by default
+- All backups are encrypted by default
   
 
-From a user agency perspective, it's ranks very high. 
+From a user agency perspective, it's fantastic, because there's no vendor lock-in and it packs a lot of functionality, while maintaining some level of simplicity.
 
 
 # Restic Cheat Sheet
