@@ -1,9 +1,16 @@
 ---
 title: Recommended Reading
+description: Essential books and articles on open source, user agency, cryptography, philosophy, and the future of the internet.
+tags:
+  - books
+  - articles
+  - recommendations
+  - reading-list
 ---
 
 ## Books
 
+- Antimemetics: Why Some Ideas Resist Spreading by Nadia Asparouhova
 - Working in Public: The Making and Maintenance of Open Source Software by Nadia Asparouhova and Nadia Eghbal
 - Zen and the Art of Motorcycle Maintenance by Robert M. Pirsig
 - Lila: An Inquiry into Morals by Robert M. Pirsig
@@ -13,6 +20,7 @@ title: Recommended Reading
 - The Cathedral & the Bazaar: Musings on Linux and Open Source by an Accidental Revolutionary by Eric S. Raymond
 - The Beginning of Infinity by David Deutsch
 - How to Be an Artist by Jerry Saltz
+- Escape from Freedom by Erich Fromm
 
 
 ## Articles
