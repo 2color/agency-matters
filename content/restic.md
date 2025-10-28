@@ -1,8 +1,11 @@
 ---
 title: Restic
+description: Powerful backup software with S3 and SFTP support, featuring deduplication, encryption, and snapshot management.
+date: 2025-10-28
 tags:
   - backup
   - cli
+  - self-hosting
 ---
 
 Restic is an extermely powerful backup software. It's nice because it supports many backends: S3, SFTP, etc without running any special daemon on the backend, i.e. the server.
