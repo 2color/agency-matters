@@ -11,35 +11,19 @@ tags:
 [Restic](https://restic.net/) is an extermely powerful backup software. It's nice because it supports many backends: S3, SFTP, etc without running any special daemon on the backend, i.e. the server.
 
 It sports the following key features:
+
 - Snapshot management
 - Deduplication with content addressed stroage and custom chuncking.
 - Written in Go
 - Self-contained multi-platform binary
 - Has been battle tested
 - All backups are encrypted by default
-  
 
 From a user agency perspective, it's fantastic, because there's no vendor lock-in and it packs a lot of functionality, while maintaining some level of simplicity.
-
 
 # Restic Cheat Sheet
 
 A quick reference guide for restic backup operations with S3 and SFTP backends.
-
-## Installation
-
-```bash
-# Debian/Ubuntu
-sudo apt install restic
-
-# macOS
-brew install restic
-
-# From binary
-wget https://github.com/restic/restic/releases/latest/download/restic_*.tar.gz
-tar -xzf restic_*.tar.gz
-sudo cp restic /usr/local/bin/
-```
 
 ## Repository Setup
 
@@ -67,11 +51,8 @@ export RESTIC_REPOSITORY="s3:s3.us-west-000.backblazeb2.com/bucket-name"
 export RESTIC_REPOSITORY="sftp:user@host:/path/to/repo"
 export RESTIC_PASSWORD="your-repo-password"
 
-# SFTP with custom port
-export RESTIC_REPOSITORY="sftp:user@host:2222//path/to/repo"
-
 # SFTP with SSH key
-export RESTIC_REPOSITORY="sftp:user@host:/path/to/repo"
+export RESTIC_REPOSITORY="sftp:user@host:port/path/to/repo"
 # Restic will use your ~/.ssh/id_rsa by default
 
 # Initialize repository
