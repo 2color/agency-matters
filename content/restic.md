@@ -422,7 +422,6 @@ sudo systemctl enable restic-backup.timer
 sudo systemctl start restic-backup.timer
 ```
 
-
 ### launchd (macOS)
 
 With [[launchd]], create the job definition in `~/Library/LaunchAgents/matters.agency.restic-backup.plist`:
@@ -481,7 +480,53 @@ launchctl bootstrap gui/501 ~/Library/LaunchAgents/matters.agency.restic-backup.
 launchctl bootout gui/501 ~/Library/LaunchAgents/matters.agency.restic-backup.plist
 ```
 
+#### Backup script with macOS notifications
 
+```bash
+#!/bin/bash
+
+source .restic-env
+
+echo $(date +"%Y-%m-%d %T") "Starting backup"
+
+export PID_FILE=".restic.pid"
+
+# Create a pid file to avoid concurrent backup processes
+if [ -f "$PID_FILE" ]; then
+  if ps -p $(cat $PID_FILE) > /dev/null; then
+    echo $(date +"%Y-%m-%d %T") "File $PID_FILE exist. Probably backup is already in progress."
+    exit 1
+  else
+    echo $(date +"%Y-%m-%d %T") "File $PID_FILE exist but process " $(cat $PID_FILE) " not found. Removing PID file."
+    rm $PID_FILE
+  fi
+fi
+
+echo $$ > $PID_FILE
+
+# restic execution
+restic backup --verbose --files-from ./backup-include.txt
+
+rm $PID_FILE
+
+if [ $? -eq 0 ]; then
+    MESSAGE="Backup successful"
+    echo $(date +"%Y-%m-%d %T") "$MESSAGE"
+    osascript -e "display notification \"$MESSAGE!\" with title \"Restic\""
+    exit 0
+elif [ $? -eq 3 ]; then
+    MESSAGE="Backup completed with warnings (some files unreadable)"
+    echo $(date +"%Y-%m-%d %T") "$MESSAGE"
+    osascript -e "display notification \"$MESSAGE\" with title \"Restic\""
+    exit 0  # or exit 3 if you want to treat this as an error
+else
+    MESSAGE="Backup failed"
+    echo $(date +"%Y-%m-%d %T") "$MESSAGE"
+    osascript -e "display notification \"$MESSAGE\" with title \"Restic\""
+    exit 1
+fi
+
+```
 
 ## Verification & Testing
 
