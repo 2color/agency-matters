@@ -364,7 +364,7 @@ restic backup /home /etc \
 # Check exit status
 if [ $? -eq 0 ]; then
     echo "Backup completed successfully"
-    
+
     # Clean up old snapshots
     restic forget --prune \
       --keep-daily 7 \
@@ -421,6 +421,67 @@ WantedBy=timers.target
 sudo systemctl enable restic-backup.timer
 sudo systemctl start restic-backup.timer
 ```
+
+
+### launchd (macOS)
+
+With [[launchd]], create the job definition in `~/Library/LaunchAgents/matters.agency.restic-backup.plist`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- See launchd.plist(5)for documentation on this file. -->
+<!-- See https://www.launchd.info/ for a tutorial. -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>Label</key>
+    <!-- Uses https://en.wikipedia.org/wiki/Reverse_domain_name_notation -->
+		<string>matters.agency.restic-backup</string>
+
+    <key>Program</key>
+    <string>/Users/user/restic-backup/backup.sh</string>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/user/restic-backup/</string>
+
+    <key>StandardOutPath</key>
+    <string>/Users/user/Library/Logs/restic-backup.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/user/Library/Logs/restic-backup.log</string>
+
+      <key>EnvironmentVariables</key>
+      <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin</string>
+      </dict>
+
+		<!-- Will schedule backup as soon as the job is loaded -->
+		<key>RunAtLoad</key>
+		<false/>
+
+		<!-- Will schedule backup every day at 16:00 -->
+		<key>StartCalendarInterval</key>
+		<array>
+			<dict>
+				<key>Hour</key>
+				<integer>16</integer>
+				<key>Minute</key>
+				<integer>00</integer>
+			</dict>
+		</array>
+	</dict>
+</plist>
+```
+
+```bash
+launchctl bootstrap gui/501 ~/Library/LaunchAgents/matters.agency.restic-backup.plist
+
+# To update job definition, edit, bootout, and bootstrap again
+launchctl bootout gui/501 ~/Library/LaunchAgents/matters.agency.restic-backup.plist
+```
+
+
 
 ## Verification & Testing
 
@@ -498,16 +559,19 @@ Downloads/
 ## Security Best Practices
 
 1. **Store credentials securely**: Use environment files with restricted permissions
+
    ```bash
    chmod 600 ~/.restic-env
    ```
 
 2. **Use separate keys for different users**
+
    ```bash
    restic key add  # Add additional access key
    ```
 
 3. **Regular verification**
+
    ```bash
    restic check --read-data-subset=5%
    ```
@@ -519,18 +583,18 @@ Downloads/
 
 ## Quick Reference
 
-| Command | Purpose |
-|---------|---------|
-| `restic init` | Initialize new repository |
-| `restic backup <path>` | Create backup |
-| `restic snapshots` | List all snapshots |
-| `restic restore <id> --target <dir>` | Restore snapshot |
-| `restic forget --keep-daily 7` | Forget old snapshots |
-| `restic prune` | Remove unused data |
-| `restic check` | Verify repository integrity |
-| `restic mount <dir>` | Mount as filesystem |
-| `restic find <file>` | Find file in snapshots |
-| `restic unlock` | Unlock repository |
+| Command                              | Purpose                     |
+| ------------------------------------ | --------------------------- |
+| `restic init`                        | Initialize new repository   |
+| `restic backup <path>`               | Create backup               |
+| `restic snapshots`                   | List all snapshots          |
+| `restic restore <id> --target <dir>` | Restore snapshot            |
+| `restic forget --keep-daily 7`       | Forget old snapshots        |
+| `restic prune`                       | Remove unused data          |
+| `restic check`                       | Verify repository integrity |
+| `restic mount <dir>`                 | Mount as filesystem         |
+| `restic find <file>`                 | Find file in snapshots      |
+| `restic unlock`                      | Unlock repository           |
 
 ---
 
