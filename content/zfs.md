@@ -4,6 +4,7 @@ description: Advanced filesystem and volume manager with built-in data integrity
 date: 2025-10-31
 tags:
   - RAID
+  - NAS
   - file system
   - self-hosting
 ---
@@ -270,7 +271,8 @@ zfs set quota=500G mypool/mydataset
 # Set reservation (guaranteed space)
 zfs set reservation=100G mypool/mydataset
 
-# Enable/disable atime updates (disable for performance)
+# Disable atime (access time tracking, improves performance by reducing writes)
+# atime updates the file metadata on every read, causing extra disk writes
 zfs set atime=off mypool/mydataset
 
 # Set record size (default 128K, adjust for workload)
