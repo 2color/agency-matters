@@ -2,7 +2,6 @@
 title: Welcome to Agency Matters
 description: A digital publication exploring user agency in software through self-hosting, local-first software, data sovereignty, and digital freedom.
 tags:
-  - user-agency
   - digital-garden
   - philosophy
 ---
