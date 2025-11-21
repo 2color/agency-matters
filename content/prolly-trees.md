@@ -5,7 +5,7 @@ description: "Prolly Tree is a hybrid data structure "
 
 A Prolly Tree is a hybrid data structure that combines the features of B-trees and Merkle trees to provide both efficient data access and verifiable integrity. It is especially useful in distributed systems and peer-to-peer networks, allowing fast diffs and structural sharing.
 
-Put differently, a prolly tree is like Merkle Tree built by recursively applying a Content-Defined Chunker, such as with a rolling hash function.
+Put differently, a prolly tree is like Merkle Tree built by recursively applying [[Content-Defined Chunking]], such as with a rolling hash function.
 
 ## Key properties
 
@@ -51,7 +51,7 @@ Put differently, a prolly tree is like Merkle Tree built by recursively applying
 ## Learning Resources
 
 - [Prolly Trees](https://www.dolthub.com/blog/2024-03-03-prolly-trees/) - Introduction to prolly-trees.
-- [Merklizing the key/value store for fun and profit](https://joelgustafson.com/posts/2023-05-04/merklizing-the-key-value-store-for-fun-and-profit) - Content-defined merkle trees: A node is the first child of its parent if `u32(node.hash[0..4]) < (2^32 / Q)`.
+- [Merklizing the key/value store for fun and profit](https://joelgustafson.com/posts/2023-05-04/merklizing-the-key-value-store-for-fun-and-profit) - Content-defined merkle trees: 
 - [Peer-to-peer ordered search indexes](https://0fps.net/2020/12/19/peer-to-peer-ordered-search-indexes/) - Peer-to-Peer Ordered Search Indexes and how Prolly Trees are used to implement them with comparison to Merkle Search Trees.
 - [Efficient Diff on Prolly-trees](https://www.dolthub.com/blog/2020-06-16-efficient-diff-on-prolly-trees/) - Visual examples for prolly-tree diffs.
 - [Probabilistic Merkle B-Trees in Noms](https://github.com/attic-labs/noms/blob/master/doc/intro.md#prolly-trees-probabilistic-b-trees) - One of the first design documents on prolly-trees from Noms.
