@@ -1,9 +1,11 @@
 ---
 title: Prolly Trees
-description: 
+description: "Prolly Tree is a hybrid data structure "
 ---
 
 A Prolly Tree is a hybrid data structure that combines the features of B-trees and Merkle trees to provide both efficient data access and verifiable integrity. It is especially useful in distributed systems and peer-to-peer networks, allowing fast diffs and structural sharing.
+
+Put differently, a prolly tree is like Merkle Tree built by recursively applying a Content-Defined Chunker, such as with a rolling hash function.
 
 ## Key properties
 
