@@ -29,3 +29,5 @@ tags:
 - [The Web Is For User Agency by Robin Berjon](https://berjon.com/user-agency/)
 - [RFC 8890: The Internet is for End Users](https://www.rfc-editor.org/rfc/rfc8890)
 - [A Cypherpunk's Manifesto by Eric Hughes](https://www.activism.net/cypherpunk/manifesto.html)
+- [The dark forest theory of the internet](https://www.ystrickler.com/the-dark-forest-theory-of-the-internet/)
+- [High Agency to Wise Agency](https://lessfoolish.substack.com/p/high-agency-to-wise-agency)
