@@ -1,5 +1,5 @@
 ---
-title: Movies and TV we like
+title: Movies and TV
 description: Recommended films and documentaries exploring technology, society, architecture, and systems thinking.
 tags:
   - media

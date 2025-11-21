@@ -1,5 +1,5 @@
 ---
-title: Recommended Reading
+title: Reading
 description: Essential books and articles on open source, user agency, cryptography, philosophy, and the future of the internet.
 tags:
   - books

@@ -37,11 +37,11 @@ export const defaultContentPageLayout: PageLayout = {
         { Component: Component.ReaderMode() },
       ],
     }),
-    Component.DesktopOnly(Component.RecentNotes()),
     Component.Explorer(),
+    Component.DesktopOnly(Component.RecentNotes()),
   ],
   right: [
-    // Component.Graph(),
+    Component.Graph(),
     Component.DesktopOnly(Component.TableOfContents()),
     Component.Backlinks(),
   ],
