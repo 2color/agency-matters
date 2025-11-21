@@ -5,7 +5,7 @@ tags:
   - homelab
   - NFS
   - SMB
-  - macOS
+  - macos
 ---
 
 ### File Sharing for Mac Clients
