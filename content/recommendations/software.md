@@ -1,5 +1,5 @@
 ---
-title: Software we like
+title: Software
 description: Curated collection of CLI tools, peer-to-peer protocols, and decentralized software that empower user agency and digital sovereignty.
 tags:
   - software
@@ -10,13 +10,13 @@ tags:
   - recommendations
 ---
 
-### cli tools
+### cli/terminal tools
 
-- fish shell
-- fd
+- [fish shell](https://fishshell.com/)
+- [fd](https://github.com/sharkdp/fd)
 - [fzf](https://github.com/junegunn/fzf)
 - [bat](https://github.com/sharkdp/bat)
-- tig
+- [tig](https://jonas.github.io/tig/)
 - git
 - tmux
 - GnuPG
@@ -24,18 +24,22 @@ tags:
 
 ## Others
 
-- [signal]
+- [signal](https://signal.org/)
 - [wireguard](https://www.wireguard.com/)
-- bitchat
+- [bitchat](https://bitchat.free/)
 - [libp2p](https://libp2p.io/)
 - bittorrent
-- ipfs
+- [ipfs](https://ipfs.tech)
 - tor
 - ansible
 - [ATProto](https://atproto.com/)
 - [Radicle](https://radicle.xyz/)
 - [Iroh](https://radicle.xyz/)
 - [Nostr](https://nostr.com/)
-- [szdt](https://github.com/gordonbrander/szdt) 
+- [szdt](https://github.com/gordonbrander/szdt)
 - [DASL](https://dasl.ing/)
 - [Seed Hypermedia](https://seed.hyper.media/)
+
+## Services
+
+- [Proton](http://proton.me/)
