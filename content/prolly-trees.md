@@ -1,6 +1,18 @@
-# Prolly Trees
+---
+title: Prolly Trees
+description: 
+---
 
 A Prolly Tree is a hybrid data structure that combines the features of B-trees and Merkle trees to provide both efficient data access and verifiable integrity. It is especially useful in distributed systems and peer-to-peer networks, allowing fast diffs and structural sharing.
+
+## Key properties
+
+- **Searchable** - They can store ordered data and perform lookups based on ordered keys or offsets.
+- **History independence** - Any data set has a unique representation, regardless of the sequence of operations that led to the current state.
+- **Self-balancing** - The tree is probabilistically balanced.
+- **Structural sharing** - Storing multiple versions of the data only requires additional storage proportional to their diff: duplicate parts of the data are deduplicated.
+- **Efficient diffing** - It's possible to compare two prolly trees (or two snapshots of the same prolly tree) and identify only the parts of the data that are different between the two trees. The time complexity is logarithmic on the total data size, and is only linear on the size of the diff.
+- **Efficient mutation** - Applying changes to the data stored in a prolly tree produces a new prolly tree. Like with diffing, the time complexity is logarithmic on the total data size, and is only linear on the size of the diff.
 
 ## Implementations
 
