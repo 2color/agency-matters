@@ -7,9 +7,9 @@ tags:
   - server
 ---
 
-As part of the a recent digital housekeeping, I decided to audit my backup strategy and come up with a better strategy and use the opportunity to also expand my knowledge and expertise. This post goes into
+As part of a recent digital housekeeping effort, I decided to audit my backup strategy. This process was an opportunity to develop a more robust approach and to expand my knowledge and expertise. This post details that journey.
 
-For the last 10 years ago, I had a patchwork of different approaches:
+For the last 10 years, I had a patchwork of different approaches:
 
 - A Synology DS216 Play NAS with two hard drive RAID array using Synology Hybrid RAID.
 - I had my most important documents synced to my icloud drive and I would ocasionally snapshot this folder —which wasn't that big— using a tarball file and save a copy on the NAS.
@@ -18,9 +18,7 @@ For the last 10 years ago, I had a patchwork of different approaches:
 
 The Synology NAS is practically a little Linux with SSH access. It has served me well, thanks to its user friendly web interface and built-in package manager. I installed Plex and could access my media library via the browser and the Plex app on an Amazon Fire TV.
 
-However, throughput was often subpar, in large part due to [[SMB]] encryption causing the CPU to max out during file transfers, which once disabled, improved significantly. Moreover, I wanted to be able to deploy containers, which isn't possible due to it's older CPU architecture and meagre resources. I also started getting SMART warnings about the health of one of the hard drives.
-
-So I decided to set up a new homelab server that would replace the Synology NAS.
+However, throughput was often subpar, largely because [[SMB]] encryption maxed out the CPU during file transfers; disabling it significantly improved performance. Moreover, I wanted to deploy containers, which wasn't possible on its older CPU architecture and with its limited resources. The decision to upgrade was solidified when I started getting SMART warnings about the health of one of the hard drives.
 
 ## What's a homelab
 
@@ -32,11 +30,11 @@ My journey into homelabs started in the early 2000s when I ran a server at home 
 
 Back then, I ran a Linux distribution called [SME Server](https://en.wikipedia.org/wiki/Koozali_SME_Server) which came with a Web UI through which you could configure the different services. The initial purpose of the server was to provide my family with a webmail client that could be accessed from anywhere. Since the ISP only supported POP3, the server would download the emails and provide access to the mailboxes with IMAP and [Horde](<https://en.wikipedia.org/wiki/Horde_(software)>). I learned the Linux terminal and many admin skills that have served me well over the years.
 
-Unlike 20 years ago, these days, there's a massive industry of cloud services with competative pricing and generous free tiers. So why bother running hardware after all? For me this can be boiled down to three motivations:
+Unlike 20 years ago, there's a massive industry of cloud services with competitive pricing and generous free tiers. So why bother running hardware after all? For me this can be boiled down to three motivations:
 
-- Agency: control over my experience.
-- Resilience: the ability with withstand outages and service dispruptions to cloud services.
-- Self-reliance: knowing that I can serve my own digital needs while learning and deepening my knowledge and expertise.
+- **Agency**: Control over my own digital experience.
+- **Resilience**: The ability to withstand outages and service disruptions from cloud providers.
+- **Self-reliance**: The satisfaction of meeting my own digital needs while learning and deepening my expertise.
 
 ## Hardware for a homelab
 
@@ -49,9 +47,9 @@ My criteria for picking hardware were:
 
 In recent years, the market has been flooded with Chinese brands such as Beelink who produce excellent Mini PCs, though they aren't very extensible. In the lower price ranges (~150 USD), many come with the Intel N150, which while very power efficient, wasn't as performant as slightly older mini PCs at the same price.
 
-I eventually opted for the HP EliteDesk 800 G4 Mini, which I snatched for 150 Euros refurbished with a 2 year warrenty. It comes with the Intel 8th gen Core i5-8500 from 2018 and scores almost double the performance of the Intel N150 at up to 10 times the power consumption ([see comparison](https://www.cpubenchmark.net/compare/6304vs3223/Intel-N150-vs-Intel-i5-8500)).
+I eventually opted for the HP EliteDesk 800 G4 Mini, which I purchased refurbished for 150 Euros with a 2-year warranty. It comes with the Intel 8th gen Core i5-8500 from 2018 and scores almost double the performance of the Intel N150, albeit at up to 10 times the power consumption ([see comparison](https://www.cpubenchmark.net/compare/6304vs3223/Intel-N150-vs-Intel-i5-8500)).
 
-The main reason though was hardware extensibility: Two memoery slots, two internal NVMe M.2 slots. It also sports Intel vPro with Active Management Technology (AMT) which allows for headless remote control without physical keyboard/screen access. This meant I could install Ubuntu Server and control the BIOS remotely, using the open source [MeshCommander](https://www.meshcommander.com/).
+The main reason for my choice, however, was its hardware extensibility: two memory slots and two internal NVMe M.2 slots. It also sports Intel vPro with Active Management Technology (AMT) which allows for headless remote control without physical keyboard/screen access. This meant I could install Ubuntu Server and control the BIOS remotely, using the open source [MeshCommander](https://www.meshcommander.com/).
 
 One thing I learned while setting it up is that for remote control to work without a physical screen, I needed a dummy DisplayPort emulator. This tiny little plug that looks like a flash drive and helps prevent issues like a blank screen when trying to connect to a computer remotely.
 
@@ -89,7 +87,7 @@ Note that it was important for me to avoid hardware RAID at all costs, because i
 
 When setting up the ZFS pool, I set up two disk mirror vdev (similar to RAID1) rather than a more complex RAIDZ array with parity vdevs (like RAID5). For more information see [[ZFS#Why Mirror VDEVs Over RAIDZ]].
 
-## Reproduciblity with Ansible
+## Reproducibility with Ansible
 
 Snowflake servers are servers that have been manually configured such that they are difficult if not impossible to reproduce. This is typically a problem if you want to replace the hardware and reproduce the exact same setup.
 
@@ -101,35 +99,35 @@ When setting up the homelab server, I avoided this by using a server configurati
 
 Ansible is a modern configuration management tool that facilitates the task of setting up and maintaining remote servers, with a minimalist design intended to get users up and running quickly.
 
-With Ansible, you write Roles comprised of individual tasks which are called from a Playbook; by rough analogy, a Role is like a class where a Playbook is an object. Each role can be responsible for a specific goal, e.g. installing Promethues, setting up a ZFS storage pool, or deploying a container. It also comes with a templating system which can be used for templating configuration files and service definitions. This is especially useful for making Roles reusable and shareable.
+With Ansible, you write Roles comprised of individual tasks which are called from a Playbook. By rough analogy, a Role is like a class where a Playbook is an object. Each role can be responsible for a specific goal, e.g. installing Prometheus, setting up a ZFS storage pool, or deploying a container. It also comes with a templating system which can be used for templating configuration files and service definitions. This is especially useful for making Roles reusable and shareable.
 
-Where Ansible stands out is that it doesn't require any special daemon or agent installed on the target machine. You just need SSH access and for Python to be installed. Moreover, Ansible encourage idempotence, meaning that you can run the same playbook or task multiple times, and after the first run, subsequent runs won't make any changes if the system is already in the desired state. So you can safely re-run playbooks without worrying about breaking things.
+Where Ansible stands out is that it doesn't require any special daemon or agent installed on the target machine. You just need SSH access and for Python to be installed. Moreover, Ansible encourages idempotence, meaning that you can run the same playbook or task multiple times, and after the first run, subsequent runs won't make any changes if the system is already in the desired state. So you can safely re-run playbooks without worrying about breaking things.
 
 What I like the most about Ansible is how easy it is to get up and running without a huge investment in learning every aspect of it. Another thing I like about Ansible is that it serves as a form of documentation for the intended end-state of a server, which is especially useful when learning and mastering new tools or packages. For example, in the ZFS role I created to create the mirror storage pool, I documented many ZFS properties, e.g. hash function, in great length in the default variables file thereby enhancing reusability for other use cases.
 
-Most of what I'm running on the server is Docker containers, which makes it really easy to manage with the [`community.docker.docker_container`](https://docs.ansible.com/projects/ansible/latest/collections/community/docker/docker_container_module.html). In essence, my roles for Docker containers encapsulate the docker image, along with port mappings, network configuration, volume mounts, with a lot of the configration interpolated from variables, ensuring flexibility and reusablility.
+Most of what I'm running on the server is Docker containers, which makes it really easy to manage with the [`community.docker.docker_container`](https://docs.ansible.com/projects/ansible/latest/collections/community/docker/docker_container_module.html). In essence, my roles for Docker containers encapsulate the docker image, along with port mappings, network configuration, volume mounts, with a lot of the configuration interpolated from variables, ensuring flexibility and reusability.
 
-## Monitoring and alerting
+## Monitoring and Alerting
 
 To monitor the server I initially installed [Cockpit](https://cockpit-project.org/) to have a web interface to get a high-level of the health of the server. I then installed Portainer to get an overview of the state of the Docker containers.
 
-But I deployed more services, I decided to add Prometheus, which I've used on and off for almost ten years in professional capacity, and continues to be one of the leading metrics monitoring systems with a lively ecosystem ef exporters and instrumentation libraries.
+As I deployed more services, I decided to add Prometheus, which I've used on and off for almost ten years in professional capacity, and continues to be one of the leading metrics monitoring systems with a lively ecosystem of exporters and instrumentation libraries.
 
 The way I set Prometheus up is as a Docker container, along with [cAdvisor](https://github.com/google/cadvisor) and [node-exporter](https://github.com/prometheus/node_exporter) which export resource and performance metrics of the operating system and the Docker containers. I have a scrape interval of 15s and the jobs are configured using an Ansible template.
 
-One way to think about Prometheus is as a time series database, which pulls metrics from different services/exporters. The way pulling typically works is extremely simple: an HTTP request to a metrics expoint, which is standardised on now . This simple design has many benefits: the pull based approach gives you automatic insight into the liveness of services.
+One way to think about Prometheus is as a time series database, which pulls metrics from different services/exporters. The way pulling typically works is extremely simple: an HTTP request to a metrics endpoint, which is now standardized. This simple design has many benefits: the pull based approach gives you automatic insight into the liveness of services.
 
-I then set up alerts for high CPU and memory usage, low disk space, and container down. These are procssed by Prometheus which when triggered sends the alerts to an a separate component called Alertmanager which manages those alerts, including silencing, inhibition, aggregation and sending out notifications via methods. In my case, I set up email notifications and called it a day.
+I then set up alerts for high CPU and memory usage, low disk space, and container down. These are processed by Prometheus which when triggered sends the alerts to a separate component called Alertmanager which manages those alerts, including silencing, inhibition, aggregation and sending out notifications via methods. In my case, I set up email notifications and called it a day.
 
 To visualise the metrics, I then deployed a Grafana container with Prometheus configured as a data source to visualise the metrics. For [node exporter](https://grafana.com/grafana/dashboards/1860-node-exporter-full/) and cadvisor I took public dashboards from Grafana to avoid reinventing the wheel and then templated them into the Grafana role so they are statically provisioned with the container. This ensures reproducibility and dodges the snowflake problem.
 
-I was pretty surprised by how little my resource utilisation was. The CPU sits at under 10% most time
+I was pretty surprised by how little my resource utilisation was. The CPU sits at under 10% most of the time.
 
 ## The danger of running public servers
 
 So how do I make my homelab accessible from everywhere?
 
-[The Dark Forest Theory of the Internet](https://www.ystrickler.com/the-dark-forest-theory-of-the-internet/) postulates that internet culture has retreted into private and semi-private spaces where people feel safer on a cultural level, as a result of the internet becoming more predetory and dangerous.
+[The Dark Forest Theory of the Internet](https://www.ystrickler.com/the-dark-forest-theory-of-the-internet/) postulates that internet culture has retreated into private and semi-private spaces where people feel safer on a cultural level, as a result of the internet becoming more predatory and dangerous.
 
 > Imagine a dark forest at night. It’s deathly quiet. Nothing moves. Nothing stirs. This could lead one to assume that the forest is devoid of life. But of course it’s not. The dark forest is full of life. It’s quiet, because night is when the predators come out. To survive, the animals stay quiet. ~ Yancey Strickler
 
@@ -139,13 +137,13 @@ In the past, I would have set up something like dynamic DNS: a persistent DNS na
 
 With a persistent and memorable DNS name, I would forward ports so that my homelab server is reachable publicly even though it's behind NAT.
 
-There are many problems with this approach: you need to set up a TLS certificate (which addmitedly is easy with Caddy), and then probably another authentication layer. With multiple services, each with its own auth layer, the surface for potential exploits just grows.
+There are many problems with this approach: you need to set up a TLS certificate (which admittedly is easy with Caddy), and then probably another authentication layer. With multiple services, each with its own auth layer, the surface for potential exploits just grows.
 
 This is where Tailscale comes in with a slick and secure solution.
 
-## Tailscale: peer-to-peer mesh VPN
+## Tailscale: Peer-to-Peer Mesh VPN
 
-I was kind of aware of Tailscale as a way to have all your devices connected, but never really tried it until I read the blog post [How I use Tailscale](https://chameth.com/how-i-use-tailscale/) which was trending a couple of months ago on Hacker News, and really made the case for it.
+I was vaguely aware of Tailscale as a way to have all your devices connected, but never really tried it until I read the blog post [How I use Tailscale](https://chameth.com/how-i-use-tailscale/) which was trending a couple of months ago on Hacker News, and really made the case for it.
 
 Tailscale creates a mesh network between all your devices using WireGuard and importantly establishes peer-to-peer connections where possible.
 
@@ -153,13 +151,13 @@ I can just type `homelab-1` in my phone browser and access my homelab dashboard.
 
 No port forwarding, no worrying about unauthorised access. Just pure bliss of direct secure connectivity. For authentication into Tailscale, I have my Google account and a passkey configured, that way if Google goes down —though if it does I think I might have bigger problems— I can still login.
 
-One thing I still have want to spend more time building out is exposing services to friends and wider circles in "cosy-web" fashion: perhaps using short-lived magiclinks/ticket/tokens —similar to the ones in [iroh](https://www.iroh.computer/docs/concepts/tickets)— that I can pass around in links, avoiding any required registration.
+One thing I still want to spend more time building out is exposing services to friends and wider circles in "cosy-web" fashion: perhaps using short-lived magiclinks/ticket/tokens —similar to the ones in [iroh](https://www.iroh.computer/docs/concepts/tickets)— that I can pass around in links, avoiding any required registration.
 
-Disclaimer: I am not paid or sponsored by Tailscale (though I'm open to it if someone from Tailscale reads this 😊) I just think they built a fanstastic product that complements the wonderful open-source WireGuard with a generous free tier.
+By the way, I am not paid or sponsored by Tailscale (though I'm open to it if someone from Tailscale reads this 😊), I just think they built a fantastic product that complements the wonderful open-source WireGuard with a generous free tier.
 
 ## The fun part: self-hosting and deploying stuff
 
-All of this was a long prelude to the fun stuff: I can now easily deploy software and service for my own use. It's as if I have my own cloud that is only accessible to me. My cosy corner in the dark forest.
+All of this was a long prelude to the fun stuff: I can now easily deploy software and services for my own use. It's as if I have my own cloud that is only accessible to me — my cozy corner in the dark forest.
 
 So far I am self hosting:
 
@@ -177,16 +175,16 @@ My plan is to also run or at least test some of these:
 - [Radicle Seeder](https://radicle.xyz/guides/seeder) - Radicle seed node
 - [Coolify](https://coolify.io/docs/get-started/introduction) - Self-hosted Heroku/Netlify alternative
 
-## Vibecoding infra
+## Vibecoding Infra
 
-AI and LLMs have been very helpful for this project — for research, hardware comparisons, landscape tooling research, and for Ansible role writing, reviewing, and debugging. I was able to just gollop down larger swaths of information, iterate faster, and make better decisions.
+AI and LLMs have been very helpful for this project — for research, hardware comparisons, landscape tooling research, and for Ansible role writing, reviewing, and debugging. I was able to gollop down larger swaths of information, iterate faster, and make better decisions.
 
-My general approach has been to brutally refine and iterate on design documents, making sure to be active in the loop and keep designs from getting unnecessrily obtuse. I created a Claude Subagent to help with reviews using the following prompt:
+My general approach has been to brutally refine and iterate on design documents, making sure to be active in the loop and keep designs from getting unnecessarily obtuse. I created a Claude Subagent to help with reviews using the following prompt:
 
 > You are a senior software engineer and infrastructure expert with extensive experience as an SRE (Site Reliability Engineer) and technical lead. You have spent years reviewing code, mentoring engineers, and leading complex technical projects across diverse technology stacks. Your expertise spans software architecture, infrastructure design, security, performance optimization, and operational excellence.
 
-My general rule of thumb is to only commit/run code that I understand, though I am sometimes willing to be flexible on this, but I find this to guiding principle to encourage learning and growth. It also avoids these tedious loops trying to fix a big mess created with a one-shot prompt having too large a scope.
+My general rule of thumb is to only commit/run code that I understand, though I am sometimes willing to be flexible on this, but I find this to be a guiding principle that encourages learning and growth. It also avoids these tedious loops trying to fix a big mess created with a one-shot prompt having too large a scope.
 
-## Final words
+## Final Words
 
-Setting up this homelab server has reinvigurated my sense of agency. I will soon share the repository with all the Ansible roles so others can use it.
+Setting up this homelab server has reinvigorated my sense of agency. I will soon share the repository with all the Ansible roles so others can use it.
