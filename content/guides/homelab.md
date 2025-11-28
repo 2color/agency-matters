@@ -11,7 +11,7 @@ tags:
 
 As part of a recent digital housekeeping effort, I decided to audit my backup strategy. This process was an opportunity to develop a more robust approach and to expand my knowledge and expertise. What started as an improvement to my backup strategy, grew in scope and became a fun homelab experiment. This post details that journey.
 
-If you are interested in the Ansible roles and playbooks, [check out the repo](https://github.com/2color/homelab-ansible) which includes pretty comprehensive documentation for others to use..
+If you are interested in the Ansible roles and playbooks, [check out the repo](https://github.com/2color/homelab-ansible) which includes pretty documentation on usage and customisation.
 
 For the last 10 years, I had a patchwork of different approaches:
 
@@ -133,7 +133,6 @@ I then set up alerts for high CPU and memory usage, low disk space, and containe
 
 To visualise the metrics, I then deployed a Grafana container with Prometheus configured as a data source to visualise the metrics. For [node exporter](https://grafana.com/grafana/dashboards/1860-node-exporter-full/) and cadvisor I took public dashboards from Grafana to avoid reinventing the wheel and then templated them into the Grafana role so they are statically provisioned with the container. This ensures reproducibility and dodges the snowflake problem.
 
-
 ![Grafana dashboard](/guides/homelab/cadvisor-dashboard.jpg)
 
 I was pretty surprised by how little my resource utilisation was. The CPU sits at under 10% most of the time.
@@ -202,6 +201,6 @@ My general rule of thumb is to only commit/run code that I understand, though I 
 
 ## Final Words
 
-Setting up this homelab server has reinvigorated a sense of agency in me. Almost all of this is built on open source software.
+Setting up this homelab server has reinvigorated a sense of agency in me. Almost all of this is built on open source software. As the saying goes: "you can just do things".
 
-The Ansible code is all in the [homelab-ansible repo](https://github.com/2color/homelab-ansible) which includes documentation for how to customise and adapt it to your use case.
+The Ansible code is all in the [homelab-ansible repo](https://github.com/2color/homelab-ansible) including documentation for how to customise and adapt it.
