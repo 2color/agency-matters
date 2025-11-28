@@ -5,20 +5,26 @@ tags:
   - homelab
   - self hosting
   - server
+  - nas
+  - ansible
 ---
 
-As part of a recent digital housekeeping effort, I decided to audit my backup strategy. This process was an opportunity to develop a more robust approach and to expand my knowledge and expertise. This post details that journey.
+As part of a recent digital housekeeping effort, I decided to audit my backup strategy. This process was an opportunity to develop a more robust approach and to expand my knowledge and expertise. What started as an improvement to my backup strategy, grew in scope and became a fun homelab experiment. This post details that journey.
+
+If you are interested in the Ansible roles and playbooks, [check out the repo](https://github.com/2color/homelab-ansible) which includes pretty comprehensive documentation for others to use..
 
 For the last 10 years, I had a patchwork of different approaches:
 
 - A Synology DS216 Play NAS with two hard drive RAID array using Synology Hybrid RAID.
-- I had my most important documents synced to my icloud drive and I would ocasionally snapshot this folder —which wasn't that big— using a tarball file and save a copy on the NAS.
+- My most important documents synced to icloud drive and ocasionally I'd make snapshots of the folder –it wasn't big— as a tarball and save a copy on the NAS.
 
 ## Replacing an aging Synology NAS
 
-The Synology NAS is practically a little Linux with SSH access. It has served me well, thanks to its user friendly web interface and built-in package manager. I installed Plex and could access my media library via the browser and the Plex app on an Amazon Fire TV.
+The Synology NAS is practically a little Linux with SSH access. It has served me well, thanks to its user friendly web interface and built-in package manager. I installed Plex and could access my media library —which I've collected and built over the years— via the browser and the Plex app on an Amazon Fire TV.
 
 However, throughput was often subpar, largely because [[SMB]] encryption maxed out the CPU during file transfers; disabling it significantly improved performance. Moreover, I wanted to deploy containers, which wasn't possible on its older CPU architecture and with its limited resources. The decision to upgrade was solidified when I started getting SMART warnings about the health of one of the hard drives.
+
+![Synology nas warning](/guides/homelab/synology-nas-warning.jpg)
 
 ## What's a homelab
 
@@ -101,11 +107,17 @@ Ansible is a modern configuration management tool that facilitates the task of s
 
 With Ansible, you write Roles comprised of individual tasks which are called from a Playbook. By rough analogy, a Role is like a class where a Playbook is an object. Each role can be responsible for a specific goal, e.g. installing Prometheus, setting up a ZFS storage pool, or deploying a container. It also comes with a templating system which can be used for templating configuration files and service definitions. This is especially useful for making Roles reusable and shareable.
 
-Where Ansible stands out is that it doesn't require any special daemon or agent installed on the target machine. You just need SSH access and for Python to be installed. Moreover, Ansible encourages idempotence, meaning that you can run the same playbook or task multiple times, and after the first run, subsequent runs won't make any changes if the system is already in the desired state. So you can safely re-run playbooks without worrying about breaking things.
+Where Ansible stands out as a configurate management software, is that it doesn't require any special daemon or agent installed on the target machine. You only need SSH access and for Python to be installed. Ansible is designed with idempotence in mind; as such you can run the same playbook or task multiple times knowing subsequent runs won't make any changes if the system is already in the desired state. So you can safely re-run playbooks without worrying about breaking things.
 
 What I like the most about Ansible is how easy it is to get up and running without a huge investment in learning every aspect of it. Another thing I like about Ansible is that it serves as a form of documentation for the intended end-state of a server, which is especially useful when learning and mastering new tools or packages. For example, in the ZFS role I created to create the mirror storage pool, I documented many ZFS properties, e.g. hash function, in great length in the default variables file thereby enhancing reusability for other use cases.
 
 Most of what I'm running on the server is Docker containers, which makes it really easy to manage with the [`community.docker.docker_container`](https://docs.ansible.com/projects/ansible/latest/collections/community/docker/docker_container_module.html). In essence, my roles for Docker containers encapsulate the docker image, along with port mappings, network configuration, volume mounts, with a lot of the configuration interpolated from variables, ensuring flexibility and reusability.
+
+## Services Dashboard
+
+I also set up a dashboard served with Caddy listening on port 80, so that I can easily access it from my Tailscale _tailnet_ with just the `homelab-1` hostname
+
+![Services dashboard](/guides/homelab/services-dashboard.jpg)
 
 ## Monitoring and Alerting
 
@@ -120,6 +132,9 @@ One way to think about Prometheus is as a time series database, which pulls metr
 I then set up alerts for high CPU and memory usage, low disk space, and container down. These are processed by Prometheus which when triggered sends the alerts to a separate component called Alertmanager which manages those alerts, including silencing, inhibition, aggregation and sending out notifications via methods. In my case, I set up email notifications and called it a day.
 
 To visualise the metrics, I then deployed a Grafana container with Prometheus configured as a data source to visualise the metrics. For [node exporter](https://grafana.com/grafana/dashboards/1860-node-exporter-full/) and cadvisor I took public dashboards from Grafana to avoid reinventing the wheel and then templated them into the Grafana role so they are statically provisioned with the container. This ensures reproducibility and dodges the snowflake problem.
+
+
+![Grafana dashboard](/guides/homelab/cadvisor-dashboard.jpg)
 
 I was pretty surprised by how little my resource utilisation was. The CPU sits at under 10% most of the time.
 
@@ -187,4 +202,6 @@ My general rule of thumb is to only commit/run code that I understand, though I 
 
 ## Final Words
 
-Setting up this homelab server has reinvigorated my sense of agency. I will soon share the repository with all the Ansible roles so others can use it.
+Setting up this homelab server has reinvigorated a sense of agency in me. Almost all of this is built on open source software.
+
+The Ansible code is all in the [homelab-ansible repo](https://github.com/2color/homelab-ansible) which includes documentation for how to customise and adapt it to your use case.
