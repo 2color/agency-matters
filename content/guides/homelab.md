@@ -13,7 +13,7 @@ As part of a recent digital housekeeping effort, I decided to audit my backup st
 
 If you are interested in the Ansible roles and playbooks, [check out the repo](https://github.com/2color/homelab-ansible) which includes pretty documentation on usage and customisation.
 
-For the last 10 years, I had a patchwork of different approaches:
+So let me start with some background. For the last 10 years, I had a patchwork of different backup approaches:
 
 - A Synology DS216 Play NAS with two hard drive RAID array using Synology Hybrid RAID.
 - My most important documents synced to icloud drive and ocasionally I'd make snapshots of the folder –it wasn't big— as a tarball and save a copy on the NAS.
