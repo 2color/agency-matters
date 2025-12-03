@@ -113,13 +113,13 @@ What I like the most about Ansible is how easy it is to get up and running witho
 
 Most of what I'm running on the server is Docker containers, which makes it really easy to manage with the [`community.docker.docker_container`](https://docs.ansible.com/projects/ansible/latest/collections/community/docker/docker_container_module.html). In essence, my roles for Docker containers encapsulate the docker image, along with port mappings, network configuration, volume mounts, with a lot of the configuration interpolated from variables, ensuring flexibility and reusability.
 
-## Services Dashboard
+## Services dashboard
 
 I also set up a dashboard served with Caddy listening on port 80, so that I can easily access it from my Tailscale _tailnet_ with just the `homelab-1` hostname
 
 ![Services dashboard](/guides/homelab/services-dashboard.jpg)
 
-## Monitoring and Alerting
+## Monitoring and alerting
 
 To monitor the server I initially installed [Cockpit](https://cockpit-project.org/) to have a web interface to get a high-level of the health of the server. I then installed Portainer to get an overview of the state of the Docker containers.
 
@@ -155,7 +155,7 @@ There are many problems with this approach: you need to set up a TLS certificate
 
 This is where Tailscale comes in with a slick and secure solution.
 
-## Tailscale: Peer-to-Peer Mesh VPN
+## Tailscale: peer-to-peer mesh VPN
 
 I was vaguely aware of Tailscale as a way to have all your devices connected, but never really tried it until I read the blog post [How I use Tailscale](https://chameth.com/how-i-use-tailscale/) which was trending a couple of months ago on Hacker News, and really made the case for it.
 
@@ -189,7 +189,7 @@ My plan is to also run or at least test some of these:
 - [Radicle Seeder](https://radicle.xyz/guides/seeder) - Radicle seed node
 - [Coolify](https://coolify.io/docs/get-started/introduction) - Self-hosted Heroku/Netlify alternative
 
-## Vibecoding Infra
+## Vibecoding infra
 
 AI and LLMs have been very helpful for this project — for research, hardware comparisons, landscape tooling research, and for Ansible role writing, reviewing, and debugging. I was able to gollop down larger swaths of information, iterate faster, and make better decisions.
 
@@ -199,7 +199,7 @@ My general approach has been to brutally refine and iterate on design documents,
 
 My general rule of thumb is to only commit/run code that I understand, though I am sometimes willing to be flexible on this, but I find this to be a guiding principle that encourages learning and growth. It also avoids these tedious loops trying to fix a big mess created with a one-shot prompt having too large a scope.
 
-## Final Words
+## Final words
 
 Setting up this homelab server has reinvigorated a sense of agency in me. Almost all of this is built on open source software. As the saying goes: "you can just do things".
 
