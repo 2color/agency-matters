@@ -2,6 +2,11 @@
 title: "Identity, Agency, and Time: A Crypto Ontology"
 description: "How cryptographic primitives—hashes, signatures, and blockchains—represent fundamental shifts in humanity's approach to memory, agency, and time, viewed through ontological and historical lenses"
 tags:
+draft: true
+---
+
+The following was written by AI as part of my testing of Gemini 3 capabilities. I made some edits and refined this — initially with followup prompts and then manually.
+
 ---
 
 To understand the ontology of of cryptographic hashes, signatures (with elliptic curves) and decentralised timestamping is to ask what they fundamentally are. not just how they work, but what new categories of existence they create. To understand their significance, we must view them not merely as computer science innovations, but as the next chapters in ancient human narratives about time, truth, and social coordination.
