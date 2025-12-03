@@ -85,4 +85,4 @@ The deepest significance is that these technologies solve the **Byzantine Genera
 
 Historically, we solved this by appointing a "General" (King, CEO, Fed Chair). Cryptography allows us to solve it through **consensus**.
 
-- **Ontology of Bitcoin/Ethereum:** These systems automate the generation of "intersubjective truth"—a reality that everyone agrees on, not because they are forced to, but because the math makes it prohibitively expensive to lie than to tell the truth. Ethereum contributors sometimes enthusiastically describe this as building "truth machines."
+Public blockchaions systems automate the generation of "intersubjective truth": a reality that everyone agrees on, not because they are forced to, but because they choose to, and the math makes it prohibitively expensive if not impossible to lie. Ethereum contributors sometimes enthusiastically describe this as building "truth machines."
