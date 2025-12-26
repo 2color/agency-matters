@@ -20,6 +20,7 @@ tags:
 - git
 - tmux
 - GnuPG
+- [VisiData](https://www.visidata.org/) — a terminal utility for exploring and arranging tabular data
 - [[restic]]
 
 ## Others
