@@ -5,8 +5,8 @@ date: 2025-10-31
 tags:
   - RAID
   - NAS
-  - file system
   - self-hosting
+  - file-system
 ---
 
 ## Overview

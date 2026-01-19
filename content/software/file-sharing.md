@@ -6,6 +6,7 @@ tags:
   - NFS
   - SMB
   - macos
+  - file-sharing
 ---
 
 ### File Sharing for Mac Clients

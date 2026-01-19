@@ -5,7 +5,7 @@ tags:
 draft: true
 ---
 
-The following was written by AI as part of my testing of Gemini 3 capabilities. I made some edits and refined this — initially with followup prompts and then manually.
+The following was written by AI as part of my testing of Gemini 3 capabilities. I made some edits and refined this, initially with followup prompts and then manually.
 
 ---
 

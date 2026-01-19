@@ -11,6 +11,7 @@ tags:
 ## Books
 
 - Antimemetics: Why Some Ideas Resist Spreading by Nadia Asparouhova
+- The Dark Forest Anthology of the Internet
 - Working in Public: The Making and Maintenance of Open Source Software by Nadia Asparouhova and Nadia Eghbal
 - Zen and the Art of Motorcycle Maintenance by Robert M. Pirsig
 - Lila: An Inquiry into Morals by Robert M. Pirsig
@@ -18,10 +19,10 @@ tags:
 - End Times: Elites, Counter-Elites and the Path of Political Disintegration by Peter Turchin
 - Material World: A Substantial Story of Our Past and Future by Ed Conway
 - The Cathedral & the Bazaar: Musings on Linux and Open Source by an Accidental Revolutionary by Eric S. Raymond
+- Designing Data-Intensive Applications by Martin Kleppmann
 - The Beginning of Infinity by David Deutsch
 - How to Be an Artist by Jerry Saltz
 - Escape from Freedom by Erich Fromm
-
 
 ## Articles
 
