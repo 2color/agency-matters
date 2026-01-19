@@ -1,6 +1,6 @@
 ---
-title: Reading
-description: Essential books and articles on open source, user agency, cryptography, philosophy, and the future of the internet.
+title: Recommended Reading
+description: Recommended books and articles on open source, user agency, cryptography, philosophy, and the future of the internet.
 tags:
   - books
   - articles

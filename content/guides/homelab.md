@@ -1,5 +1,5 @@
 ---
-title: "Homelab in 2025: self hosting your own cloud"
+title: "Homelab in 2026: self hosting your own cloud"
 description:
 tags:
   - homelab

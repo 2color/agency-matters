@@ -1,5 +1,5 @@
 ---
-title: Software
+title: Apps and Tools
 description: Curated collection of CLI tools, peer-to-peer protocols, and decentralized software that empower user agency and digital sovereignty.
 tags:
   - software
@@ -10,7 +10,7 @@ tags:
   - recommendations
 ---
 
-### cli/terminal tools
+## cli/terminal tools
 
 - [fish shell](https://fishshell.com/)
 - [fd](https://github.com/sharkdp/fd)
@@ -20,7 +20,7 @@ tags:
 - git
 - tmux
 - GnuPG
-- [VisiData](https://www.visidata.org/) — a terminal utility for exploring and arranging tabular data
+- [[VisiData]]
 - [[restic]]
 
 ## Others
