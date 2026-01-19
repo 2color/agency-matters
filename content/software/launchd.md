@@ -5,6 +5,7 @@ date: 2025-10-30
 tags:
   - macos
   - self-hosting
+  - software
 ---
 
 - [launchd](https://www.launchd.info/) is the process manager used by macOS to run scripts and programs at specified intervals or events.

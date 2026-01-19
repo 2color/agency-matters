@@ -89,9 +89,9 @@ Device           Start         End     Sectors  Size Type
 /dev/sdb9  11721027584 11721043967       16384    8M Solaris reserved 1
 ```
 
-Note that it was important for me to avoid hardware RAID at all costs, because it creates a dependency on the specific hardware to manage the RAID which poses data loss risk if the hardware malfunctions and you cannot find an identical replacement. With the [[ZFS]] filesystem, I set up a software RAID array using the two disks, and know that if I change the hardware, I can just import the the storage pool.
+Note that it was important for me to avoid hardware RAID at all costs, because it creates a dependency on the specific hardware to manage the RAID which poses data loss risk if the hardware malfunctions and you cannot find an identical replacement. With the [[zfs]] filesystem, I set up a software RAID array using the two disks, and know that if I change the hardware, I can just import the the storage pool.
 
-When setting up the ZFS pool, I set up two disk mirror vdev (similar to RAID1) rather than a more complex RAIDZ array with parity vdevs (like RAID5). For more information see [[ZFS#Why Mirror VDEVs Over RAIDZ]].
+When setting up the ZFS pool, I set up two disk mirror vdev (similar to RAID1) rather than a more complex RAIDZ array with parity vdevs (like RAID5). For more information see [[zfs#Why Mirror VDEVs Over RAIDZ]].
 
 ## Reproducibility with Ansible
 
@@ -189,6 +189,153 @@ My plan is to also run or at least test some of these:
 - [Radicle Seeder](https://radicle.xyz/guides/seeder) - Radicle seed node
 - [Coolify](https://coolify.io/docs/get-started/introduction) - Self-hosted Heroku/Netlify alternative
 
+## Backups with Restic
+
+Now that my homelab server was reliably configured, monitoried, and had some services running, it was time to set up backups using [[restic]]. 
+
+I chose Restic because of its simplicity, reliability, deduplication, and encryption after considering a number of options like Borg, and duplicacy. Borg was ruled out because it requires a binary to be installed on the backup target, i.e. the server. Restic is special in that it supports many backends, including SFTP (SSH File Transfer Protocol), S3, and S3 compatible backend. This means I can compose my backup strategy and use the same tool for both local and remote backups (more on that below in the 3-2-1 backup strategy section).
+
+### Automating with launchd
+
+Since my main computer is running macOS, I installed Restic on it using Homebrew. Initially, I set up [[launchd]] agent (the macOS process manager) to run the following script, which would handle concurrency, logging, and a native os notification:
+
+```bash
+#!/bin/bash
+
+source .restic-env
+
+echo $(date +"%Y-%m-%d %T") "Starting backup"
+
+export PID_FILE=".restic.pid"
+
+# Create a pid file to avoid concurrent backup processes
+if [ -f "$PID_FILE" ]; then
+  if ps -p $(cat $PID_FILE) > /dev/null; then
+    echo $(date +"%Y-%m-%d %T") "File $PID_FILE exist. Probably backup is already in progress."
+    exit 1
+  else
+    echo $(date +"%Y-%m-%d %T") "File $PID_FILE exist but process " $(cat $PID_FILE) " not found. Removing PID file."
+    rm $PID_FILE
+  fi
+fi
+
+echo $$ > $PID_FILE
+
+# restic execution
+restic backup --verbose --files-from ./backup-include.txt --tag launchd
+
+rm $PID_FILE
+
+if [ $? -eq 0 ]; then
+    MESSAGE="Backup successful"
+    echo $(date +"%Y-%m-%d %T") "$MESSAGE"
+    osascript -e "display notification \"$MESSAGE!\" with title \"Restic\""
+    exit 0
+elif [ $? -eq 3 ]; then
+    MESSAGE="Backup completed with warnings (some files unreadable)"
+    echo $(date +"%Y-%m-%d %T") "$MESSAGE"
+    osascript -e "display notification \"$MESSAGE\" with title \"Restic\""
+    exit 0  # or exit 3 if you want to treat this as an error
+else
+    MESSAGE="Backup failed"
+    echo $(date +"%Y-%m-%d %T") "$MESSAGE"
+    osascript -e "display notification \"$MESSAGE\" with title \"Restic\""
+    exit 1
+fi
+```
+
+I defined the [[launchd]] job definition so that it would run every day at 16:00
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- See launchd.plist(5)for documentation on this file. -->
+<!-- See https://www.launchd.info/ for a tutorial. -->
+<!-- Debug with: $ tail -f /var/log/com.apple.xpc.launchd/launchd.log | grep erikw.restic -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+        <dict>
+                <key>Label</key>
+                <string>life.norman.restic-backup</string>
+
+    <key>Program</key>
+    <string>/Users/danielnorman/restic-backup/backup.sh</string>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/danielnorman/restic-backup/</string>
+
+    <key>StandardOutPath</key>
+    <string>/Users/danielnorman/Library/Logs/restic-backup.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/danielnorman/Library/Logs/restic-backup.log</string>
+
+      <key>EnvironmentVariables</key>
+      <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin</string>
+      </dict>
+
+                <key>RunAtLoad</key>
+                <true/>
+                <!-- Will schedule backup every day at 16:00 -->
+                <key>StartCalendarInterval</key>
+                <array>
+                        <dict>
+                                <key>Hour</key>
+                                <integer>16</integer>
+                                <key>Minute</key>
+                                <integer>00</integer>
+                        </dict>
+                </array>
+        </dict>
+</plist>
+```
+
+I also had to make sure that the job definition was defined correctly, and bootstrapped. Secret management was a bit of a headache, as I didn't want to just store the secrets in plain text on disk. I tried to be clever and store in in my 1password and use the CLI to fetch it, but that felt complex and error prone. So I then tried using the macOS keychain/passwords app. Since this was [in the restic docs](https://restic.readthedocs.io/en/stable/faq.html#how-can-i-specify-encryption-passwords-automatically), I just went with it and it worked for a while.
+
+After a couple of days I felt missing a more comprehensive UI to be able to keep track and monitor multiple backup jobs, configuration, their status, and progress. Most importantly, I didn't feel like I'm in control.
+### Backrest
+
+[Backrest](https://github.com/garethgeorge/backrest) is a web based UI for Restic I discovered that was an instant hit. I could easily automate my whole backup setup, with multiple repos and backup plans giving my a peace of mind I had unknowingly longed for. Under the hood, Backrest manages the Launchd jobs and configuration which is much neater.
+
+![backrest UI](/guides/homelab/backrest.png)
+In theory with Tailscale, it doesn't really matter if I'm at home or remote, because my homelab has the same hostname, and the traffic is routed automagically by Tailscale, ensuring that backups never skip a beat. 
+### Troubleshooting failed backups over SSH 
+
+In reality things are not always smooth, and I had problems with the restic respository on the homelab getting locked due to a failed run, causing subsequent runs to also fail due to the lock. When looking at the Restic logs in Backrest I found:
+```
+[repo-manager] 01:43:26.429Z	debug	starting backup	{"repo": "homelab-1-das", "plan": "important-docs"}
+[restic] 01:43:26.430Z	debug	command: "/Users/dan/.local/share/backrest/restic backup --json /Users/dan/Documents -o sftp.args=-oBatchMode=yes --exclude-caches --tag plan:important-docs --tag created-by:daniel-mbp14 --parent 9927a04a86ae2b4c44b1f2e498d85e56f8622709af27f3f3118e6a51e5f6561f"
+[restic] 02:11:33.684Z	debug	subprocess ssh: Connection to homelab-1 closed by remote host.
+```
+However, when looking at the logs on the homelab server, I could see the connection successfully established, however there wasn't anything indicating the server dropped the connection. Another thing that is strange is that this ran unusually late, compared to the configured time. Moreover, the time difference between the time at which `restic backup` was executed and the connection was dropped was unusually long compared to the average time it takes for the plan to run (usually under a minute since the size isn't very big and changes are minimal).
+
+My hunch is that this might be related to a connection timeout between the laptop running on a battery or something related to Tailscale. I got a warning about the Homelab server running an older version of Tailscale, which I already updated. So I'll keep an eye on this. 
+
+I also setup [Backrest hooks](https://garethgeorge.github.io/backrest/docs/hooks) which allow you to respond to different operation lifecycle events, like snapshot failure by either running an arbitrary command or relaying the event to a service like healthchecks.io. So now any time a plan fails, I'll get an email notification.
+
+### 3-2-1 backup strategy
+
+I loosely followed the 3-2-1 backup strategy, which suggests:
+
+- 3 copies of your data
+- 2 different media types
+- 1 copy offsite
+
+In many of the explanations of this strategy the 2 different media types can be a bit misleading, because this strategy dates back to a time when storage media included CDs, floppy disks and there was the risk of these media becoming obsolete. But there's another interpretation which says that you should keep it on a **separate** than just a different type. In other words, on two separate external hard drives. This is obviously implied, by virtue of having one copy offsite. 
+
+Nonetheless, my approach is to have the original working copy on disk, the snapshots on my homelab, which technically stores two copies with a mirror RAID, and snapshots on Backblaze R2 cloud storage which has [built in redundancy](https://www.backblaze.com/blog/vault-cloud-storage-architecture/)
+
+As for organisation I basically compiled an inventory of all my data and how I want backed up, and then set up Restic plans to back it up to my homelab.
+
+
+### iCloud Photos
+
+Since my photos are all backed up to iCloud Photos, it's a bit more complicated, and I'll need to come up with a better plan to ensure I have another copy that isn't tied to my Apple account — after all this blog is about agency. This came up recently in a [Hacker News discussion](https://news.ycombinator.com/item?id=46578921), so when I have time, I'll probably look into this again. The main challenge is that "Optimize Mac Storage" is enabled, and I don't have enough space to have a full copy of my library on my laptop.
+
+I may be able to solve this with an additional SSD that is permanently occupying a USB-C slot, like the SANDISK Extreme Fit USB-C which comes in sizes up to 1TB. Alterantively, I may look into https://photosbackup.app/ which apparently supports libraries with "Optimize Mac Storage" enabled
+
+I may even set up the old NAS in my office and since it's already on my Tailnet, I can have it as another SFTP destination for backups.
+
 ## Vibecoding infra
 
 AI and LLMs have been very helpful for this project — for research, hardware comparisons, landscape tooling research, and for Ansible role writing, reviewing, and debugging. I was able to gollop down larger swaths of information, iterate faster, and make better decisions.
@@ -200,6 +347,8 @@ My general approach has been to brutally refine and iterate on design documents,
 My general rule of thumb is to only commit/run code that I understand, though I am sometimes willing to be flexible on this, but I find this to be a guiding principle that encourages learning and growth. It also avoids these tedious loops trying to fix a big mess created with a one-shot prompt having too large a scope.
 
 ## Final words
+
+What started initially as just a naive idea of replacing an old NAS grew in scope. But it's been an overall fun learning experience.
 
 Setting up this homelab server has reinvigorated a sense of agency in me. Almost all of this is built on open source software. As the saying goes: "you can just do things".
 

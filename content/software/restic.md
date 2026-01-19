@@ -6,6 +6,7 @@ tags:
   - backup
   - cli
   - self-hosting
+  - software
 ---
 
 [Restic](https://restic.net/) is an extermely powerful backup software. It's nice because it supports many backends: S3, SFTP, etc without running any special daemon on the backend, i.e. the server.
