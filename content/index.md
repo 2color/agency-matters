@@ -40,7 +40,7 @@ To get started, check out the following pages:
 
 - [[reading | Recommended Reading]]
 - [[tools | Apps and Tools]]
-- [[homelab | Homelab in 2025: self hosting your own cloud]]
+- [[homelab | Homelab in 2026: self hosting your own cloud]]
 - [[Software]]
 
 ## About
