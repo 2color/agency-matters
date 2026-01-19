@@ -1,3 +1,3 @@
 ---
-title: Software Development
+title: Software
 ---
