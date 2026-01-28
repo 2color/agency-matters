@@ -35,7 +35,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-        fetch-depth: 20
+        with:
+          fetch-depth: '20' # Get the last 20 commits so that
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
