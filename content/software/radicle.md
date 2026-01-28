@@ -160,7 +160,59 @@ Radicle uses each NID's namespace to store refs:
 - `rad/root`: points to the initial identity commit tree from which the RID is derived
 - `cob/*` refs: correspond to repo identity, issues, and patches
 
-Example: inspecting a reaction (thumbs up) to a patch:
+##### Inspecting the sigrefs
+
+View my sigrefs for a given repo:
+
+```
+$ cat ~/.radicle/storage/z45E5Sz1mE6itUMUjEgBoqt7ymYRt/refs/namespaces/z6MktwkohCx8aHZ1QCjVZUiLmX92oPZFxRiFZkbq32Tk5Tkm/refs/rad/sigrefs
+
+15b3a9a5ebf8ad9811bc6de66b2907357228281e
+```
+
+Or simply with the `rad` cli from the working copy:
+
+```
+$ rad inspect --sigrefs
+z6MktwkohCx8aHZ1QCjVZUiLmX92oPZFxRiFZkbq32Tk5Tkm 15b3a9a5ebf8ad9811bc6de66b2907357228281e
+```
+
+> If there are other clones, i.e. soft-forks of the repo, you `rad inspect --sigrefs` will list all the ones it has synched
+
+`15b3a9a5ebf8ad9811bc6de66b2907357228281e` is the Git commit hash pointing to a tree containing two files (in the bare repository managed by radicle aka "stored copy"):
+
+```sh
+$ git -C ~/.radicle/storage/z45E5Sz1mE6itUMUjEgBoqt7ymYRt cat-file -p 15b3a9a5ebf8ad9811bc6de66b2907357228281e
+
+tree 25616de3cef9b8914400884c0dfc63981c1bd378
+parent 8965edab06a92b6afad242a802ea5fb2d6886331
+author 2color <2color@z6MktwkohCx8aHZ1QCjVZUiLmX92oPZFxRiFZkbq32Tk5Tkm> 1769447378 +0100
+committer 2color <2color@z6MktwkohCx8aHZ1QCjVZUiLmX92oPZFxRiFZkbq32Tk5Tkm> 1769447378 +0100
+
+Update signed refs
+```
+
+To view the files in the tree:
+
+```
+git -C ~/.radicle/storage/z45E5Sz1mE6itUMUjEgBoqt7ymYRt cat-file -p 25616de3cef9b8914400884c0dfc63981c1bd378
+
+100644 blob 1a488fd0651a8ddc7dcd271b829529d7086b3a72	refs
+100644 blob efde048b7fe7f2c75ed32e0bc76730b56be37ff1	signature
+```
+
+And to view the refs blob:
+
+```
+git -C ~/.radicle/storage/z45E5Sz1mE6itUMUjEgBoqt7ymYRt cat-file -p 1a488fd0651a8ddc7dcd271b829529d7086b3a72
+
+7fddb31abb5927b57b5d5b79f3a302b6e9ca5876 refs/cobs/xyz.radicle.id/7fddb31abb5927b57b5d5b79f3a302b6e9ca5876
+832bfeb87a01ec77b8c16c82f7fdcd283b141747 refs/heads/main
+7fddb31abb5927b57b5d5b79f3a302b6e9ca5876 refs/rad/id
+7fddb31abb5927b57b5d5b79f3a302b6e9ca5876 refs/rad/root
+```
+
+##### Example: inspecting a reaction (thumbs up) to a patch:
 
 ```sh
 # My NID
