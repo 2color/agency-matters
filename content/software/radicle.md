@@ -14,9 +14,16 @@ Radicle is an open source, peer-to-peer code collaboration stack built on Git. U
 ## Getting Started
 
 - Start node with debug logging: `rad node start -- --log-level debug`
-  - `rad node start` calls `radicle-node`
-- `rad init` in a repo will push to the preferred seeds
+- `rad node start` calls the `radicle-node` binary
+- Every radicle node is identified by an ed25519 key from which the a DID is derived, e.g. `did:key:z6MktwkohCx8aHZ1QCjVZUiLmX92oPZFxRiFZkbq32Tk5Tkm`
+	- ssh-agent is used for signing operations
+- `rad init` in a repo will:
+	- Create a new identity document from which a globally unique Repository Identifier (RID) will be derived
+	- Announce the repo to connected nodes who, depending on their *seeding policy*, will replicate the repository.
 - Signing in radicle is independent of git signing
+	- The two can be combined.
+	- In git, commits and annotated tags can be signed (either using ssh or GPG keys)
+	- In Radicle, all git references are signed by the key and namespaced by the node id
 - Radicle uses git's remote helpers to support `rad://` URLs
 - After pushing to `rad` remote, gossip announces to peers, which in turn fetch
 - Whenever you clone or initialise a new repository, your node's seeding policy is updated to keep these repositories in sync with the network.
@@ -26,8 +33,8 @@ Radicle is an open source, peer-to-peer code collaboration stack built on Git. U
   - `rad checkout`
   - `rad remote add`
 - The set of peers that are followed in the context of a seeded repository is called the **scope**.
-  - By default scope is all, which includes all the peers who have a clone
-  - Setting to followed will only subscribe to delegated: `rad seed rad:z3gqcJUoA1n9HaHKufZs5FCSGazv5 --scope followed`
+	- By default scope is `all`, which includes all the peers who have a clone
+	- Setting to `followed` will only subscribe to delegates and nodes you follow: `rad seed rad:z3gqcJUoA1n9HaHKufZs5FCSGazv5 --scope followed`
 - `rad ls` only shows repos that you've interacted with, i.e. have refs for, irrespective of seeding policy
 
 ## Collaboration Workflows
@@ -273,7 +280,7 @@ Added in `989edacd564fa658358f5ccfd08c243c5ebd8cda` and included in Radicle 1.1.
 
 - **What's the difference between `RID` which you get with `rad .` and the output of `rad id`?**
   - `rad .` → Repository ID (identifies _a project_)
-  - `rad id` → Manages repository identity (doesn't output an ID)
+  - `rad id` → Manages repository identity document (doesn't output an ID)
 - **How do human friendly names work?**
   - Aliases are picked by the node and sent in Node Announcements over Noise connections
 - **Running `push rad HEAD:refs/patches` twice from the same branch and same head will create two patches with the same head. But doesn't create a remote tracking branch. Why?**
@@ -291,10 +298,11 @@ Added in `989edacd564fa658358f5ccfd08c243c5ebd8cda` and included in Radicle 1.1.
 ### User Guide
 
 - Remote is a git term, but can be misleading if it refers to the "bare" local hidden stored copy:
-  > With Radicle, you will typically be interacting with two different repository copies on your device, the _working copy_ and a hidden, _stored copy_ that you interact with via `git push rad` and `git pull rad` commands
-  > and later:
-  > Whenever you execute a `git push rad` command, you are pushing the changes in your local working copy to your **remote** copy.
+> 	Whenever you execute a `git push rad` command, you are pushing the changes in your local working copy to your **remote** copy.
+	- Corrected in https://app.radicle.xyz/nodes/iris.radicle.xyz/rad:z371PVmDHdjJucejRoRYJcDEvD5pp/commits/110e29b65c365c1b6623d76f93483c4b4bd317f4
 - `rad seed rad:z3gqcJUoA1n9HaHKufZs5FCSGazv5 --scope followed` is a bit misleading. Why not `--scope delegates`
+	- `followed` nodes  == delegates + nodes you follow.
+	- Delegates are the bare minimum needed
 - Working with issues assumes the reader has a copy of the `dark-star` repository
 - In the collaboration section, it might be useful to add a short section on what happens while you alternate from being offline/online and how it affects usage
 - The Selectively Revealing Repositories could benefit from a simple diagram with 3 nodes representing the two collaborators and the seed node and visualise the flow of data over a noise encrypted connection (which mutually authenticates the peers).
@@ -321,6 +329,19 @@ Added in `989edacd564fa658358f5ccfd08c243c5ebd8cda` and included in Radicle 1.1.
 - The absence of [deep links](https://v2.tauri.app/plugin/deep-linking/) hinders smooth transition across contexts/apps
   - Flow from the web explorer to the native app is currently nonexistent. So when someone shares a patch out-of-band, like on Zulip, e.g. [https://app.radicle.xyz/.../patches/83fbdf](https://app.radicle.xyz/nodes/seed.radicle.xyz/rad%3Az371PVmDHdjJucejRoRYJcDEvD5pp/patches/83fbdf33b783991691e41656528bb47d2a3cf11c) and you view it, there's no way for you to open it in the app.
 
+## Radicle CI
+Radicle CI add continuous integration (CI) support on top of [Radicle](https://radicle.xyz/). There are several components:
+- The [**CI broker**](https://app.radicle.xyz/nodes/radicle.liw.fi/rad%3AzwTxygwuz5LDGBq255RA2CbNGrz8) (aka **`cib`**)receives change events from the Radicle node and triggers CI to run based on its configuration.
+- An **adapter** is invoked by the **CI broker** to use a CI system to run CI for a specific change. There are several adapters, each for a different type of CI system, e.g. GitHub Action, Woodpecker, concourse, and others.
+	- The adapter can either execute the run itself or use an external CI
+	- **Ambient** is the CI engine Lars built and it has an adapter called `radicle-ci-ambient`
+- A `rad-ci` extension for the Radicle `rad` command emulates a CI run by running it locally. This avoids having to wait for a CI node ("server") to have free resources.
+
+
+### Radicle CI resources
+- https://radicle-ci.liw.fi/
+- https://radicle.xyz/2025/07/23/using-radicle-ci-for-development
+- https://ambient.liw.fi/
 ## Quick Reference
 
 ### Cheatsheet
@@ -387,11 +408,13 @@ Personal notes from exploring Radicle:
     - Interop with atproto
     - [MASL manifests](https://dasl.ing/masl.html)
     - Interop with HTTP
-    - BDASL
+	- BDASL
 - [#heartwood > Canonical JSON specification](https://radicle.zulipchat.com/#narrow/channel/369277-heartwood/topic/Canonical.20JSON.20specification/near/568405374)
 - Dive into Radicle Search in radicle.garden
 - Report issue in radicle-explorer ea67111
 - Engage with https://peter.demin.dev/12_articles/80-radicle.html in [#Feedback > My Radicle Journey](https://radicle.zulipchat.com/#narrow/channel/392584-Feedback/topic/My.20Radicle.20Journey/near/569925295)
 - [#heartwood > Adding another remote by default?](https://radicle.zulipchat.com/#narrow/channel/369277-heartwood/topic/Adding.20another.20remote.20by.20default.3F/with/570181800)
 - Create `rad-find` cli utility to help find and inspect radicle object ids without knowing what they are
-  - `rad:z45E5Sz1mE6itUMUjEgBoqt7ymYRt`
+	- `rad:z45E5Sz1mE6itUMUjEgBoqt7ymYRt`
+	- https://app.radicle.xyz/nodes/iris.radicle.xyz/rad%3Az45E5Sz1mE6itUMUjEgBoqt7ymYRt
+- [#heartwood > Adding another remote by default?](https://radicle.zulipchat.com/#narrow/channel/369277-heartwood/topic/Adding.20another.20remote.20by.20default.3F/with/570181800)
