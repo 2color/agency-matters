@@ -21,7 +21,7 @@ Radicle is an open source, peer-to-peer code collaboration stack built on Git. U
 	- Create a new identity document from which a globally unique Repository Identifier (RID) will be derived
 	- Announce the repo to connected nodes who, depending on their *seeding policy*, will replicate the repository.
 - Signing in radicle is independent of git signing
-	- The two can be combined.
+	- The two can be combined. 
 	- In git, commits and annotated tags can be signed (either using ssh or GPG keys)
 	- In Radicle, all git references are signed by the key and namespaced by the node id
 - Radicle uses git's remote helpers to support `rad://` URLs
@@ -44,7 +44,7 @@ Radicle is an open source, peer-to-peer code collaboration stack built on Git. U
 - `rad issue comment COB-ID`
 - `rad inbox` shows notifications (issues/patches)
 - `git push rad HEAD:refs/patches` to open a patch
-  - `refs/patches` is a magic ref
+	- `refs/patches` is a magic ref
 
 ### Patches
 
@@ -301,7 +301,7 @@ Added in `989edacd564fa658358f5ccfd08c243c5ebd8cda` and included in Radicle 1.1.
 > 	Whenever you execute a `git push rad` command, you are pushing the changes in your local working copy to your **remote** copy.
 	- Corrected in https://app.radicle.xyz/nodes/iris.radicle.xyz/rad:z371PVmDHdjJucejRoRYJcDEvD5pp/commits/110e29b65c365c1b6623d76f93483c4b4bd317f4
 - `rad seed rad:z3gqcJUoA1n9HaHKufZs5FCSGazv5 --scope followed` is a bit misleading. Why not `--scope delegates`
-	- `followed` nodes  == delegates + nodes you follow.
+	- `followed` nodes  == delegates + nodes you follow. 
 	- Delegates are the bare minimum needed
 - Working with issues assumes the reader has a copy of the `dark-star` repository
 - In the collaboration section, it might be useful to add a short section on what happens while you alternate from being offline/online and how it affects usage
@@ -329,19 +329,9 @@ Added in `989edacd564fa658358f5ccfd08c243c5ebd8cda` and included in Radicle 1.1.
 - The absence of [deep links](https://v2.tauri.app/plugin/deep-linking/) hinders smooth transition across contexts/apps
   - Flow from the web explorer to the native app is currently nonexistent. So when someone shares a patch out-of-band, like on Zulip, e.g. [https://app.radicle.xyz/.../patches/83fbdf](https://app.radicle.xyz/nodes/seed.radicle.xyz/rad%3Az371PVmDHdjJucejRoRYJcDEvD5pp/patches/83fbdf33b783991691e41656528bb47d2a3cf11c) and you view it, there's no way for you to open it in the app.
 
-## Radicle CI
-Radicle CI add continuous integration (CI) support on top of [Radicle](https://radicle.xyz/). There are several components:
-- The [**CI broker**](https://app.radicle.xyz/nodes/radicle.liw.fi/rad%3AzwTxygwuz5LDGBq255RA2CbNGrz8) (aka **`cib`**)receives change events from the Radicle node and triggers CI to run based on its configuration.
-- An **adapter** is invoked by the **CI broker** to use a CI system to run CI for a specific change. There are several adapters, each for a different type of CI system, e.g. GitHub Action, Woodpecker, concourse, and others.
-	- The adapter can either execute the run itself or use an external CI
-	- **Ambient** is the CI engine Lars built and it has an adapter called `radicle-ci-ambient`
-- A `rad-ci` extension for the Radicle `rad` command emulates a CI run by running it locally. This avoids having to wait for a CI node ("server") to have free resources.
 
 
-### Radicle CI resources
-- https://radicle-ci.liw.fi/
-- https://radicle.xyz/2025/07/23/using-radicle-ci-for-development
-- https://ambient.liw.fi/
+
 ## Quick Reference
 
 ### Cheatsheet
@@ -418,3 +408,10 @@ Personal notes from exploring Radicle:
 	- `rad:z45E5Sz1mE6itUMUjEgBoqt7ymYRt`
 	- https://app.radicle.xyz/nodes/iris.radicle.xyz/rad%3Az45E5Sz1mE6itUMUjEgBoqt7ymYRt
 - [#heartwood > Adding another remote by default?](https://radicle.zulipchat.com/#narrow/channel/369277-heartwood/topic/Adding.20another.20remote.20by.20default.3F/with/570181800)
+- Read radicle ci blog posts and docs
+	- https://blog.liw.fi/posts/2026/radicle-status-quo-01/
+- Try out Radicle Plugin for Claude Code 
+	- https://app.radicle.xyz/nodes/rosa.radicle.xyz/rad%3AzvBj4kByGeQSrSy2c4H7fyK42cS8
+- [#RIPs > `rad:`-URI](https://radicle.zulipchat.com/#narrow/channel/369876-RIPs/topic/.60rad.3A.60-URI/with/571505789)
+	- Leave review on the RIP patch https://app.radicle.xyz/nodes/rosa.radicle.xyz/rad:z3trNYnLWS11cJWC6BbxDs5niGo82/patches/2e2061857d703b8467648ff2b77efd61c72ca583
+- [#heartwood > Private Networks and Network Names](https://radicle.zulipchat.com/#narrow/channel/369277-heartwood/topic/Private.20Networks.20and.20Network.20Names/with/567520105)
