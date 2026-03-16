@@ -72,8 +72,9 @@ Radicle is an open source, peer-to-peer code collaboration stack built on Git. U
   - As a delegate:
     `git tag -a releases/v1.0.0` and
     `git push rad releases/v1.0.0`
-  - Other delegates, and my alias is `2color`, they would run the following
-  - `git push -f rad 2color/tags/releases/v1.0.0:refs/tags/releases/v1.0.0`
+  - Other delegates (assuming my alias is `2color`) would run the following:
+	`git push -f rad 2color/tags/releases/v1.0.0:refs/tags/releases/v1.0.0`
+	`git push -f self rudolfs/tags/releases/0.22.0:refs/tags/releases/0.22.0`
 
 ## Technical Reference
 
@@ -276,6 +277,15 @@ Added in `989edacd564fa658358f5ccfd08c243c5ebd8cda` and included in Radicle 1.1.
   - Or directly in the radicle storage `~/.radicle/storage/z3gqcJUoA1n9HaHKufZs5FCSGazv5/refs/namespaces/z6MktwkohCx8aHZ1QCjVZUiLmX92oPZFxRiFZkbq32Tk5Tkm/rad`
 - Analytics for explorer: https://plausible.io/app.radicle.xyz
 
+
+### Radicle Desktop
+- Tauri App
+
+#### Radicle Desktop Questions
+- Hexagonal architecture for the different Rust crates
+- They rely on a radicle node being there. 
+- They handle the case of no home folder or no binary
+
 ## Questions and Answers
 
 - **What's the difference between `RID` which you get with `rad .` and the output of `rad id`?**
@@ -328,6 +338,8 @@ Added in `989edacd564fa658358f5ccfd08c243c5ebd8cda` and included in Radicle 1.1.
 - The workflow for contributors agreeing on canonical refs is slightly confusing, especially if it's an annotated tag, e.g `$ git push -f self rudolfs/tags/releases/0.22.0:refs/tags/releases/0.22.0`
 - The absence of [deep links](https://v2.tauri.app/plugin/deep-linking/) hinders smooth transition across contexts/apps
   - Flow from the web explorer to the native app is currently nonexistent. So when someone shares a patch out-of-band, like on Zulip, e.g. [https://app.radicle.xyz/.../patches/83fbdf](https://app.radicle.xyz/nodes/seed.radicle.xyz/rad%3Az371PVmDHdjJucejRoRYJcDEvD5pp/patches/83fbdf33b783991691e41656528bb47d2a3cf11c) and you view it, there's no way for you to open it in the app.
+- If you clone using the rad remote helper, e.g. `git clone rad://z3xrqLjabPMVuXEQJLtSsJPg5MwkY my-repo` you have to also manually set the `rad` remote `git remote add rad rad://z3xrqLjabPMVuXEQJLtSsJPg5MwkY` so that radicle knows 
+
 
 
 
