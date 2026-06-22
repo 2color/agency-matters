@@ -17,7 +17,6 @@ title: Rust
 - Collections
 - Async
 - Tests
-- Cargo and modules
 ## Learning Materials
 - https://fasterthanli.me/articles/a-half-hour-to-learn-rust
 ## Variables
@@ -289,6 +288,137 @@ impl Default for Greeting {
     }
 }
 ```
+
+### External Trait Implementation Pattern
+
+A common Rust pattern where you implement a trait defined by an external crate on your own types. This lets you plug into the crate's existing logic — you supply the "what" (your data/behavior), the crate supplies the "how" (the complex logic). The trait is the bridge between the two.
+
+#### The Pattern
+
+An external crate defines:
+1. A trait (the contract)
+2. Functions/methods with that trait as a bound (the logic)
+
+You implement the trait on your type, which unlocks all of the crate's logic for free.
+
+#### Example: Encoding
+
+```rust
+// External crate provides:
+// trait Encode { fn encode(&self, buf: &mut Vec<u8>); }
+// fn send_message<T: Encode>(msg: &T) { ... complex networking logic ... }
+
+struct MyMessage {
+    id: u64,
+    body: String,
+}
+
+impl external_crate::Encode for MyMessage {
+    fn encode(&self, buf: &mut Vec<u8>) {
+        buf.extend(&self.id.to_le_bytes());
+        buf.extend(self.body.as_bytes());
+    }
+}
+
+// Now you get all the crate's logic for free:
+external_crate::send_message(&my_msg);
+```
+
+You only write the thin "how to encode my type" part. The crate does the heavy lifting (networking, framing, retries, etc.).
+
+#### Example: Serde
+
+Implementing `Serialize` (usually via derive) unlocks the entire serde ecosystem:
+
+```rust
+#[derive(Serialize, Deserialize)]
+struct MyConfig {
+    name: String,
+    version: u32,
+}
+
+// Serialize was implemented via derive, now you get:
+serde_json::to_string(&config)?;    // JSON serialization
+toml::to_string(&config)?;          // TOML serialization
+bincode::serialize(&config)?;       // binary serialization
+```
+
+#### Example: Error Conversion
+
+Implementing `From` lets you use `?` to propagate external errors into your own error type:
+
+```rust
+struct MyError(String);
+
+impl From<some_crate::SomeError> for MyError {
+    fn from(err: some_crate::SomeError) -> Self {
+        MyError(err.to_string())
+    }
+}
+
+fn do_work() -> Result<(), MyError> {
+    some_crate::risky_operation()?; // SomeError auto-converts to MyError
+    Ok(())
+}
+```
+
+#### Example: Framework Callbacks
+
+Some crates define handler/callback traits. Implementing them plugs your logic into the framework's lifecycle:
+
+```rust
+// External crate defines:
+// trait EventHandler { fn on_event(&self, event: Event); }
+// fn run_server<H: EventHandler>(handler: H) { ... }
+
+struct MyHandler;
+
+impl some_crate::EventHandler for MyHandler {
+    fn on_event(&self, event: Event) {
+        println!("got event: {:?}", event);
+    }
+}
+
+some_crate::run_server(MyHandler);
+```
+
+## `#[non_exhaustive]`
+
+Prevents external crates from constructing or exhaustively matching a struct or enum. Lets you add fields or variants in a future version without it being a breaking change.
+
+**On an enum** — external code must include a `_` wildcard arm:
+
+```rust
+#[non_exhaustive]
+pub enum Command {
+    Status,
+    Seed { .. },
+}
+
+// external crate — `_` arm required, or it won't compile
+match cmd {
+    Command::Status => { ... }
+    Command::Seed { .. } => { ... }
+    _ => { }
+}
+```
+
+**On a struct** — external code must use `..` in patterns and cannot construct the struct directly (since it can't know all fields):
+
+```rust
+#[non_exhaustive]
+pub struct Config {
+    pub timeout: u32,
+}
+
+// external crate — must use `..` to ignore any future fields
+let Config { timeout, .. } = config;
+
+// construction is forbidden outside the defining crate
+let c = Config { timeout: 30 }; // compile error
+```
+
+Both constraints apply simultaneously if you have a non-exhaustive enum with non-exhaustive struct variants.
 
 ## Generics
 ```rust
