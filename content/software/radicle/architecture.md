@@ -19,9 +19,17 @@ thread, so it needs no locking; blocking work is pushed out to a worker
 pool.
 
 - **`service`** — the core thread. Runs the reactor event loop, which
-  drives the `Wire` (the protocol/wire-format handler) and, through it,
-  the `Service` (the protocol state machine: gossip, repositories,
-  peers). Spawned in `runtime.rs` via `Reactor::new`.
+  drives `Wire` (the reactor's `ReactionHandler`, in
+  `crates/radicle-node/src/wire.rs`) and, through it, the `Service` (the
+  protocol state machine: gossip, repositories, peers). Note that
+  `Service` lives in the `radicle-protocol` crate
+  (`crates/radicle-protocol/src/service.rs`) and is re-exported by the
+  node; the wire *format* (`Encode`/`Decode`, `Frame`) is also in
+  `radicle-protocol` (`crates/radicle-protocol/src/wire.rs`), distinct
+  from the node-side `Wire` handler. The thread itself is spawned in
+  `runtime.rs` via `Reactor::new`. See
+  [crate-organisation.md](crate-organisation.md) for how the crates
+  divide this work.
 - **`control`** — listens on the Unix control socket for `rad` CLI
   commands and spawns a short-lived thread per connection. See
   `control.rs` and [control-protocol.md](control-protocol.md).
