@@ -11,6 +11,19 @@ project: Radicle
 
 Radicle is an open source, peer-to-peer code collaboration stack built on Git. Unlike centralized code hosting platforms, there is no single entity controlling the network. Repositories are replicated across peers in a decentralized manner, and users are in full control of their data and workflow.
 
+## Technical Reference
+
+### Deep Dives
+
+Detailed notes on Radicle and Heartwood internals:
+
+- [[architecture|Node Architecture]] - the threads `radicle-node` runs and how a git fetch flows through them
+- [[event-loop|Reactor Event Loop]] - the single-threaded mio reactor driving non-blocking I/O
+- [[control-protocol|Node Control Protocol]] - the JSON-over-Unix-socket protocol between the `rad` CLI and the node
+- [[signature-formats|Signature formats]] - how Radicle packages its ed25519 signatures
+- [[protocol-versioning|Protocol Versioning in Heartwood]] - version checks vs. Iroh's ALPN negotiation
+- [[patch-cob-deletion|COB Deletion in Radicle]] - why deleting a collaborative object is only a soft delete
+
 ## Getting Started
 
 - Start node with debug logging: `rad node start -- --log-level debug`
@@ -76,7 +89,6 @@ Radicle is an open source, peer-to-peer code collaboration stack built on Git. U
 	`git push -f rad 2color/tags/releases/v1.0.0:refs/tags/releases/v1.0.0`
 	`git push -f self rudolfs/tags/releases/0.22.0:refs/tags/releases/0.22.0`
 
-## Technical Reference
 
 ### Protocol Overview
 
