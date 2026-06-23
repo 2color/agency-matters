@@ -128,9 +128,9 @@ Its entire lifecycle is two methods.
 ```mermaid
 stateDiagram-v2
     [*] --> Idle
-    Idle --> Active: fetch() inserts<br/>state.rs:190
-    Active --> Idle: fetched() removes<br/>state.rs:213
-    Active --> Active: fetch() again →<br/>AlreadyFetching / Queued<br/>state.rs:179
+    Idle --> Active: fetch() inserts (state.rs#L190)
+    Active --> Idle: fetched() removes (state.rs#L213)
+    Active --> Active: fetch() again → AlreadyFetching / Queued (state.rs#L179)
     note right of Active
         If fetched() is never called,
         the repo is stuck Active forever.
