@@ -20,6 +20,7 @@ Detailed notes on Radicle and Heartwood internals:
 - [[architecture|Node Architecture]] - the threads `radicle-node` runs and how a git fetch flows through them
 - [[event-loop|Reactor Event Loop]] - the single-threaded mio reactor driving non-blocking I/O
 - [[control-protocol|Node Control Protocol]] - the JSON-over-Unix-socket protocol between the `rad` CLI and the node
+- [[stream-multiplexing|Stream Multiplexing]] - how one connection carries control, gossip, and per-repo git streams
 - [[signature-formats|Signature formats]] - how Radicle packages its ed25519 signatures
 - [[protocol-versioning|Protocol Versioning in Heartwood]] - version checks vs. Iroh's ALPN negotiation
 - [[patch-cob-deletion|COB Deletion in Radicle]] - why deleting a collaborative object is only a soft delete
