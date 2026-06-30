@@ -1,16 +1,16 @@
 ---
 title: Welcome to Agency Matters
-description: A digital publication exploring user agency in software through self-hosting, local-first software, data sovereignty, and digital freedom.
+description: A digital garden exploring user agency in software through self-hosting, local-first software, data sovereignty, and digital freedom.
 date: 2025-09-12
 ---
 
-## Agency Matters is a publication about user agency in software
+## Agency Matters is a digital garden with a focus on user agency in software
 
 User agency, in the context of software, is the user's ability to make meaningful choices to control their experience in a digital environment.
 
-Agency Matters is a digital publication that takes the form of a digital garden — a practice of digital knowledge collection as a means of learning and disseminating knowledge.
+Agency Matters is a digital garden — a living knowledge base built by collecting, learning, and disseminating knowledge.
 
-The goal with this digital garden is to grow a knowledge base about **User Agency** in technology by examining emerging technology and software subcultures in terms of whether they espouse user agency as a goal, and the degree to which user agency is imbued in software. The content found here is based on analysis from first principles, reason, and real world usage.
+My goal with this digital garden is to grow a knowledge base about **User Agency** in technology by examining emerging technology and software subcultures in terms of whether they espouse user agency as a goal, and the degree to which user agency is imbued in software. The content found here is based on analysis from first principles and real world experience.
 
 In as much as this digital garden is philosophical, it is also practical, with guides, and cheatsheets on using software to elevate user agency.
 
