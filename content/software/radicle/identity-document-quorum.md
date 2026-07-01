@@ -6,7 +6,7 @@ tags:
 project: Radicle
 ---
 
-The rules for adopting a change to a repository's identity document are easy to get wrong, because the `threshold` field looks like it should govern them but does not. This note captures the actual model, drawn from the [#Support > Identity document change not passing quorum]([#Support > Identity document change not passing quorum](https://radicle.zulipchat.com/#narrow/channel/369873-Support/topic/Identity.20document.20change.20not.20passing.20quorum/with/597022756)) thread on the Radicle Zulip.
+The rules for adopting a change to a repository's identity document are easy to get wrong, because the `threshold` field looks like it should govern them but does not. This note captures the actual model, drawn from the [#Support > Identity document change not passing quorum](https://radicle.zulipchat.com/#narrow/channel/369873-Support/topic/Identity.20document.20change.20not.20passing.20quorum/with/597022756)) thread on the Radicle Zulip.
 
 ## Release status
 
