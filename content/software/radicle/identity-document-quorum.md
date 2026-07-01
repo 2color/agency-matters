@@ -22,11 +22,7 @@ A repo with 3 delegates and `threshold: 1`:
 
 ```json
 {
-  "delegates": [
-    "did:key:z6Mkm8ky…",
-    "did:key:z6MkwPUe…",
-    "did:key:z6MkrnXJ…"
-  ],
+  "delegates": ["did:key:z6Mkm8ky…", "did:key:z6MkwPUe…", "did:key:z6MkrnXJ…"],
   "threshold": 1
 }
 ```
@@ -37,7 +33,27 @@ A proposal accepted by 2 of 3 delegates still showed as `active` rather than ado
 
 An identity document change is adopted when an **absolute majority** of delegates sign off, independent of the `threshold` value. For 3 delegates that is 2 signatures, whether `threshold` is 1, 2, or 3.
 
-`threshold` does **not** govern identity changes. It controls the **canonical repository head**: how many delegates must have signed the *same commit* on the default branch for that commit to be treated as canonical. It is a separate mechanism from identity governance. This distinction tripped up even a core dev in the thread, who initially wrote tests changing `threshold` expecting it to affect the quorum.
+This is a simple majority (`> 50%`). `Doc::majority` computes it as `delegates.len() / 2 + 1` (`crates/radicle/src/identity/doc.rs:971`), the smallest integer strictly greater than half the set:
+
+```rust
+pub fn is_majority(&self, votes: usize) -> bool {
+    votes >= self.majority()
+}
+
+pub fn majority(&self) -> usize {
+    self.delegates.len() / 2 + 1
+}
+```
+
+| Delegates | Required to adopt |
+| --------- | ----------------- |
+| 1         | 1                 |
+| 2         | 2                 |
+| 3         | 2                 |
+| 4         | 3                 |
+| 5         | 3                 |
+
+`threshold` does **not** govern identity changes. It controls the **canonical repository head**: how many delegates must have signed the _same commit_ on the default branch for that commit to be treated as canonical. It is a separate mechanism from identity governance. This distinction tripped up even a core dev in the thread, who initially wrote tests changing `threshold` expecting it to affect the quorum.
 
 The majority requirement is not new; it predates the identity-evaluation rewrite. It exists specifically to enforce the next rule.
 
@@ -67,13 +83,13 @@ The original evaluation only reconciled revisions already in memory. A **late-ar
 
 ## Summary
 
-| Rule | Value |
-|---|---|
-| Signatures to adopt an identity change | Absolute majority of delegates (e.g. 2 of 3) |
-| What `threshold` controls | Canonical branch head / signed refs, not identity changes |
-| History shape | Strictly linear; no forks (guaranteed by the majority rule) |
-| Competing siblings when one is adopted | `Rejected` (by Sibling) |
-| Descendants of rejected/redacted revisions | Born `Rejected` (by Parent) |
+| Rule                                       | Value                                                       |
+| ------------------------------------------ | ----------------------------------------------------------- |
+| Signatures to adopt an identity change     | Absolute majority of delegates (e.g. 2 of 3)                |
+| What `threshold` controls                  | Canonical branch head / signed refs, not identity changes   |
+| History shape                              | Strictly linear; no forks (guaranteed by the majority rule) |
+| Competing siblings when one is adopted     | `Rejected` (by Sibling)                                     |
+| Descendants of rejected/redacted revisions | Born `Rejected` (by Parent)                                 |
 
 ## Inspecting the state
 
