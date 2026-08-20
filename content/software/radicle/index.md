@@ -21,9 +21,12 @@ Detailed notes on Radicle and Heartwood internals:
 - [[event-loop|Reactor Event Loop]] - the single-threaded mio reactor driving non-blocking I/O
 - [[control-protocol|Node Control Protocol]] - the JSON-over-Unix-socket protocol between the `rad` CLI and the node
 - [[stream-multiplexing|Stream Multiplexing]] - how one connection carries control, gossip, and per-repo git streams
+- [[git-wire-protocol|Git Wire Protocol Versions]] - v2 between nodes, v0 over HTTP through `radicle-httpd`
 - [[signature-formats|Signature formats]] - how Radicle packages its ed25519 signatures
 - [[protocol-versioning|Protocol Versioning in Heartwood]] - version checks vs. Iroh's ALPN negotiation
 - [[patch-cob-deletion|COB Deletion in Radicle]] - why deleting a collaborative object is only a soft delete
+- [[dns-service-discovery|Node Discovery via DNS-SD]] - the node advertises over DNS-SD but resolves nothing beyond A/AAAA
+- [[radicle-teams|Adding teams functionality]]
 
 ## Getting Started
 
@@ -352,9 +355,6 @@ Added in `989edacd564fa658358f5ccfd08c243c5ebd8cda` and included in Radicle 1.1.
 - The absence of [deep links](https://v2.tauri.app/plugin/deep-linking/) hinders smooth transition across contexts/apps
   - Flow from the web explorer to the native app is currently nonexistent. So when someone shares a patch out-of-band, like on Zulip, e.g. [https://app.radicle.xyz/.../patches/83fbdf](https://app.radicle.xyz/nodes/seed.radicle.xyz/rad%3Az371PVmDHdjJucejRoRYJcDEvD5pp/patches/83fbdf33b783991691e41656528bb47d2a3cf11c) and you view it, there's no way for you to open it in the app.
 - If you clone using the rad remote helper, e.g. `git clone rad://z3xrqLjabPMVuXEQJLtSsJPg5MwkY my-repo` you have to also manually set the `rad` remote `git remote add rad rad://z3xrqLjabPMVuXEQJLtSsJPg5MwkY` so that radicle knows 
-
-
-
 
 
 ## Quick Reference
