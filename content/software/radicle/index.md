@@ -25,6 +25,7 @@ Detailed notes on Radicle and Heartwood internals:
 - [[signature-formats|Signature formats]] - how Radicle packages its ed25519 signatures
 - [[protocol-versioning|Protocol Versioning in Heartwood]] - version checks vs. Iroh's ALPN negotiation
 - [[patch-cob-deletion|COB Deletion in Radicle]] - why deleting a collaborative object is only a soft delete
+- [[deleting-pushed-refs|Deleting refs you pushed to your namespace]] - the git delete refspec the `rad` remote accepts, and how far the deletion travels
 - [[dns-service-discovery|Node Discovery via DNS-SD]] - the node advertises over DNS-SD but resolves nothing beyond A/AAAA
 - [[radicle-teams|Adding teams functionality]]
 - [[content-moderation|Content Moderation in Radicle]] - the ten design questions behind seeding policy, block lists, and vouching
