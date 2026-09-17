@@ -29,6 +29,7 @@ Detailed notes on Radicle and Heartwood internals:
 - [[dns-service-discovery|Node Discovery via DNS-SD]] - the node advertises over DNS-SD but resolves nothing beyond A/AAAA
 - [[radicle-teams|Adding teams functionality]]
 - [[content-moderation|Content Moderation in Radicle]] - the ten design questions behind seeding policy, block lists, and vouching
+- [[Orgs and actors]]
 
 ## Getting Started
 
