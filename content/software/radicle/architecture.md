@@ -229,3 +229,108 @@ worker produces a result.
 - **One synchronization point.** Everything that needs to re-enter the
   core thread — CLI commands, worker results, shutdown — arrives through
   the reactor's control channel and wakes it via the mio `Waker`.
+## Migration to iroh
+
+The change "node: Switch to iroh" and the changes after it replace the mio reactor with iroh, which runs over QUIC. The sections above describe the old design. The diagrams below show the new design as it is at the tip of the iroh changes.
+
+### Startup
+
+`main` in `radicle-node/src/main.rs` starts the node in two steps. First, `Runtime::init` does all synchronous setup and starts the service thread. Then `execute` creates the tokio runtime and runs `Runtime::run` on it with `block_on`. `Runtime::run` runs on the main thread, and the tasks it starts run on the tokio worker threads.
+
+```mermaid
+graph TD
+    MAIN["main()"] --> PARSE["parse_options()<br/>initialize_logging()"]
+    MAIN --> EXEC["execute(options)"]
+
+    EXEC --> CFG["load config, unlock keystore,<br/>verify fingerprint"]
+    EXEC --> SIGI["signals::install(notify)"]
+    SIGI -.->|spawns| SIGT(["signals thread"])
+
+    EXEC --> INIT["Runtime::init(...)"]
+    INIT --> OPEN["open storage, COB cache,<br/>notifications, node database"]
+    INIT --> SVC["Service::new + initialize"]
+    INIT --> CHANS["create channels:<br/>std mpsc (ServiceInput)<br/>tokio mpsc (RuntimeOutput)"]
+    INIT -.->|spawns| SVCT(["service thread<br/>run_service"])
+    INIT --> HANDLE["Handle::new"]
+    INIT --> BIND["Runtime::bind<br/>(control socket)"]
+
+    EXEC --> BUILD["tokio::runtime::Builder<br/>::new_multi_thread().enable_all().build()"]
+    BUILD -.->|"starts (one per core)"| WORKERS(["tokio worker threads"])
+    BUILD -.->|"starts empty, grows on demand"| BPOOL(["tokio blocking pool"])
+
+    EXEC --> BLOCKON["rt_tokio.block_on(Runtime::run())<br/>(on the main thread)"]
+    BLOCKON --> AD["AddressDiscovery::new"]
+    BLOCKON --> EP["Endpoint::builder(...).bind()"]
+    BLOCKON --> RT["Router::builder(endpoint)<br/>.accept(ALPN_GOSSIP, ALPN_GIT).spawn()"]
+    BLOCKON -.->|spawns| CTRLT(["control-listener thread<br/>control::listen"])
+    BLOCKON --> LOOP["select! loop until Shutdown"]
+    LOOP --> DISPATCH["dispatch(io) → JoinSet::spawn"]
+    DISPATCH -.->|runs on| WORKERS
+    DISPATCH -.->|"Git jobs via spawn_blocking"| BPOOL
+```
+
+Solid arrows are calls. Dashed arrows lead to threads that the call starts.
+
+### Components
+
+```mermaid
+graph TB
+    subgraph external["External"]
+        CLI["rad CLI"]
+        PEERS["Remote peers<br/>(QUIC via iroh)"]
+        OS["OS signals"]
+    end
+
+    subgraph node["radicle-node process"]
+        SIG["signals thread"]
+        CTRL["control-listener thread<br/>(non-blocking Unix socket)"]
+        CTRLCONN["per-connection<br/>command threads"]
+
+        subgraph serviceThread["service thread (std thread)"]
+            SERVICE["Service<br/>(protocol state machine)<br/>run_service loop"]
+        end
+
+        subgraph tokioRt["tokio multi-thread runtime"]
+            subgraph mainThread["main thread (block_on)"]
+                RUN["Runtime::run<br/>select! loop + dispatch"]
+            end
+            subgraph workerThreads["worker threads (one per core)"]
+                ENDPOINT["iroh Endpoint<br/>+ MemoryLookup"]
+                ROUTER["iroh Router"]
+                GOSSIP["GossipProtocolHandler<br/>one task per peer<br/>ALPN radicle/gossip/1"]
+                GITH["GitProtocolHandler<br/>one task per Git connection<br/>ALPN radicle/git/1"]
+            end
+            subgraph blockingPool["blocking pool (up to 512 threads)"]
+                BLOCKING["spawn_blocking<br/>Worker::process<br/>(SyncIoBridge)"]
+            end
+        end
+    end
+
+    PEERS <-->|"QUIC"| ENDPOINT
+    ENDPOINT --- ROUTER
+    ROUTER -->|"inbound gossip"| GOSSIP
+    ROUTER -->|"inbound Git"| GITH
+    RUN -->|"Io::Connect → connect(ALPN gossip)"| GOSSIP
+    RUN -->|"Io::Fetch → connect(ALPN Git)"| GITH
+    RUN -->|"Io::Write<br/>(tokio mpsc, cap 32)"| GOSSIP
+    GITH --> BLOCKING
+
+    OS --> SIG
+    SIG -->|"Signal (std mpsc)"| RUN
+    CLI <-->|"Unix socket<br/>line-delimited JSON"| CTRL
+    CTRL -->|spawns| CTRLCONN
+
+    CTRLCONN -->|"ServiceInput::User"| SERVICE
+    RUN -->|"ServiceInput::Shutdown"| SERVICE
+    GOSSIP -->|"ServiceInput::Connected / Message / Disconnected"| SERVICE
+    BLOCKING -->|"ServiceInput::Worker (TaskResult)"| SERVICE
+    SERVICE -->|"RuntimeOutput::Io<br/>(tokio unbounded mpsc)"| RUN
+```
+
+The main differences from the old design:
+
+- **The service stays synchronous.** `Service` runs on its own std thread. It receives every event as a `ServiceInput` on a std `mpsc` channel. It ticks when no input arrives for 250 ms. It sends each `Io` to the tokio runtime on a tokio unbounded channel.
+- **iroh owns the network.** One iroh `Endpoint` replaces the mio reactor, and QUIC does the multiplexing that `Wire` and `StreamId` did before. A `Router` sends each inbound connection to a handler by its ALPN.
+- **Gossip and Git use separate connections.** Each gossip peer has one connection with one bidirectional stream. Each Git fetch or upload has its own connection. A fetch does not need a gossip session, and a fetch failure does not disconnect the gossip peer.
+- **No worker pool.** Each Git job runs in `tokio::task::spawn_blocking`. `SyncIoBridge` gives the blocking `radicle_fetch` code `io::Read` and `io::Write` on the QUIC stream. The per-stream channels and the task queue are gone.
+- **Address lookup.** The node gives iroh the known direct addresses through a `MemoryLookup` before it dials. If no direct address works, iroh falls back to relays and discovery.
