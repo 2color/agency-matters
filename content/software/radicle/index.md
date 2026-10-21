@@ -18,6 +18,7 @@ Radicle is an open source, peer-to-peer code collaboration stack built on Git. U
 Detailed notes on Radicle and Heartwood internals:
 
 - [[architecture|Node Architecture]] - the threads `radicle-node` runs and how a git fetch flows through them
+- [[iroh-migration|Migration to iroh]] - why and how the node moved from mio/TCP to iroh/QUIC, with open risks
 - [[event-loop|Reactor Event Loop]] - the single-threaded mio reactor driving non-blocking I/O
 - [[control-protocol|Node Control Protocol]] - the JSON-over-Unix-socket protocol between the `rad` CLI and the node
 - [[stream-multiplexing|Stream Multiplexing]] - how one connection carries control, gossip, and per-repo git streams
