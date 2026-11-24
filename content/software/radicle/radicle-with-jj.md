@@ -152,3 +152,48 @@ git push rad tag releases/0.17.0
 - jj imports the new tag on the next command.
 - The push goes to your own namespace. The tag becomes canonical when enough delegates have the same tag. With one delegate, this happens at once.
 - Run `jj git fetch --remote rad` or `git fetch rad` to see tags from other delegates.
+
+# Fix `unsupported extension name extensions.relativeworktrees`
+
+## Problem
+
+A tool fails to open a repository:
+
+```text
+git: unsupported extension name extensions.relativeworktrees; class=Repository (6)
+```
+
+## Cause
+
+`jj workspace add` creates a Git worktree when the current workspace is colocated and the `git.colocate` config is `true`. jj runs `git worktree add` with `worktree.useRelativePaths=true`. Git then writes relative paths in the worktree links and sets `extensions.relativeworktrees` in the repository config.
+
+Tools built on libgit2 do not support this extension. Examples are older jj versions and the Rust `git2` crate (used by Tauri and cargo builds). They refuse to open the repository.
+
+The relative links have one benefit: you can move a repository and its workspaces together without breaking the links. Git uses absolute paths by default.
+
+## Fix
+
+Create the workspace without a Git worktree:
+
+```sh
+jj workspace add --no-colocate ../my-workspace
+```
+
+To make this the default for all repositories:
+
+```sh
+jj config set --user git.colocate false
+```
+
+The workspace then has no `.git` file, so git commands do not work in it. jj commands work as usual.
+
+To repair a workspace that already exists:
+
+```sh
+jj workspace forget <name>
+git worktree prune
+git config --unset extensions.relativeworktrees
+jj workspace add --no-colocate <path>
+```
+
+The `--unset` step is only needed if the extension stays in the config after the prune. `jj workspace forget` does not delete the directory. Delete it or pick a new path before you add the workspace again.

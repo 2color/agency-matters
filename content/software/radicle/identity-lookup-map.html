@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Identity Lookup Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
+<style>
+/* Layout: five columns, read left to right from callers down to git data; SVG edges drawn behind the nodes. */
+:root {
+  --bg: #f6f7f5;
+  --panel: #ffffff;
+  --fg: #1d2421;
+  --muted: #5d6863;
+  --line: #d5dbd7;
+  --edge: #a9b4ae;
+  --accent: #1f6f8b;
+  --accent-soft: #dcecf2;
+  --write: #b4621a;
+  --write-soft: #f6e6d6;
+  --ok: #2f7d4f;
+  --ok-soft: #dcf0e3;
+  --bad: #b23b3b;
+  --bad-soft: #f5dddd;
+  --cache: #6b4fa8;
+  --cache-soft: #e9e2f6;
+  --cost: #8a6d00;
+  --cost-soft: #f4ecc8;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-head: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
+  --f-code: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131816; --panel: #1b2220; --fg: #e3e9e5; --muted: #9aa6a0; --line: #2f3a36; --edge: #4d5a55;
+    --accent: #6cc0dc; --accent-soft: #173640; --write: #e69a52; --write-soft: #3d2a17;
+    --ok: #6ccc90; --ok-soft: #183526; --bad: #ec7c7c; --bad-soft: #3e1d1d;
+    --cache: #b39ef0; --cache-soft: #2b2342; --cost: #e2c45a; --cost-soft: #36301a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131816; --panel: #1b2220; --fg: #e3e9e5; --muted: #9aa6a0; --line: #2f3a36; --edge: #4d5a55;
+  --accent: #6cc0dc; --accent-soft: #173640; --write: #e69a52; --write-soft: #3d2a17;
+  --ok: #6ccc90; --ok-soft: #183526; --bad: #ec7c7c; --bad-soft: #3e1d1d;
+  --cache: #b39ef0; --cache-soft: #2b2342; --cost: #e2c45a; --cost-soft: #36301a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 1320px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--f-head); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: 1.9rem; font-weight: 600; }
+h2 { font-size: 1.3rem; font-weight: 600; }
+p { margin: 0; max-width: 72ch; }
+code, .mono { font-family: var(--f-code); font-size: 0.86em; }
+header { display: grid; gap: 10px; }
+.sub { color: var(--muted); }
+.eyebrow { font-family: var(--f-code); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+
+.controls { display: grid; gap: 14px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.row-label { font-family: var(--f-head); font-weight: 600; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+.tag { display: inline-flex; align-items: center; gap: 5px; font-family: var(--f-code); font-size: 11.5px; padding: 1px 7px; border-radius: 4px; white-space: nowrap; border: 1px solid transparent; }
+.t-checked { color: var(--ok); background: var(--ok-soft); }
+.t-unchecked { color: var(--bad); background: var(--bad-soft); }
+.t-cached { color: var(--cache); background: var(--cache-soft); }
+.t-eval { color: var(--cost); background: var(--cost-soft); }
+.t-radid { color: var(--accent); background: var(--accent-soft); }
+.t-write { color: var(--write); background: var(--write-soft); }
+.edge-key { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.edge-key svg { overflow: visible; }
+
+button.path {
+  font: 500 13.5px var(--f-body); color: var(--fg); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 6px; padding: 6px 11px; cursor: pointer;
+}
+button.path:hover { border-color: var(--accent); }
+button.path[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button:focus-visible, .node:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.scroller { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.map { position: relative; min-width: 1240px; display: grid; grid-template-columns: repeat(5, 1fr); column-gap: 64px; padding: 18px 22px 22px; }
+.map svg.edges { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.col { display: flex; flex-direction: column; gap: 10px; position: relative; z-index: 1; min-width: 0; }
+.col-head { display: grid; gap: 2px; padding-bottom: 8px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.col-head h3 { font-size: 14.5px; }
+.col-head span { font-family: var(--f-code); font-size: 11.5px; color: var(--muted); }
+
+.node {
+  text-align: left; font: inherit; color: inherit; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 7px; padding: 8px 10px; cursor: pointer; display: grid; gap: 5px; transition: opacity .15s, border-color .15s, box-shadow .15s;
+}
+.node:hover { border-color: var(--accent); }
+.node .name { font-family: var(--f-code); font-size: 12.5px; font-weight: 500; word-break: break-word; }
+.node .kind { font-size: 11.5px; color: var(--muted); }
+.node .tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.node.data { border-style: dashed; }
+.node.caller .name { font-family: var(--f-body); font-weight: 600; font-size: 13px; }
+
+.map.focus .node { opacity: .28; }
+.map.focus .node.on { opacity: 1; }
+.map.focus .node.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.node .step { display: none; font-family: var(--f-code); font-size: 11px; color: var(--panel); background: var(--accent); border-radius: 3px; padding: 0 5px; justify-self: start; }
+.node.has-step .step { display: inline-block; }
+
+path.e { fill: none; stroke: var(--edge); stroke-width: 1.3; transition: opacity .15s, stroke .15s; }
+path.e.w { stroke: var(--write); stroke-dasharray: 5 4; }
+path.e.r { stroke-dasharray: 2 3; }
+.map.focus path.e { opacity: .12; }
+.map.focus path.e.on { opacity: 1; stroke: var(--accent); stroke-width: 2; }
+.map.focus path.e.w.on { stroke: var(--write); }
+.arrow-fill { fill: var(--edge); }
+
+.detail { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 12px; min-height: 120px; }
+.detail h2 { font-family: var(--f-code); font-size: 1.05rem; font-weight: 600; }
+.detail .loc { font-family: var(--f-code); font-size: 12.5px; color: var(--muted); }
+.detail .links { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.detail .links h4 { margin: 0 0 6px; font: 600 12px var(--f-head); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.chip { font-family: var(--f-code); font-size: 12px; background: var(--bg); border: 1px solid var(--line); color: var(--fg); border-radius: 4px; padding: 2px 7px; cursor: pointer; margin: 0 4px 4px 0; }
+.chip:hover { border-color: var(--accent); }
+ol.steps { margin: 0; padding-left: 22px; display: grid; gap: 6px; max-width: 90ch; }
+ol.steps li::marker { font-family: var(--f-code); color: var(--accent); }
+.note { font-size: 13.5px; color: var(--muted); border-left: 3px solid var(--line); padding-left: 10px; max-width: 80ch; }
+
+.types { display: grid; gap: 14px; }
+.tgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
+.tcard { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.tcard h3 { font-family: var(--f-code); font-size: 13.5px; font-weight: 600; }
+.tcard pre { margin: 0; font-family: var(--f-code); font-size: 12px; line-height: 1.55; background: var(--bg); border-radius: 5px; padding: 8px 10px; overflow-x: auto; }
+.tcard p { font-size: 13.5px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">heartwood · after patch 76d48a1</div>
+    <h1>Identity lookup map</h1>
+    <p class="sub">How code in <code>radicle</code> finds the identity document of a repository, which paths check that a commit is an accepted revision, where the cache sits, and who writes <code>rad/id</code>. Select a node to see what it calls and what calls it, or pick a path to trace it step by step.</p>
+  </header>
+
+  <section class="controls" aria-label="Legend and paths">
+    <div class="row">
+      <span class="row-label">Tags</span>
+      <span class="tag t-checked">checked</span><span class="sub" style="font-size:13px">accepted revisions only</span>
+      <span class="tag t-unchecked">unchecked</span><span class="sub" style="font-size:13px">any commit with a doc</span>
+      <span class="tag t-cached">cached</span>
+      <span class="tag t-eval">full eval</span>
+      <span class="tag t-radid">reads rad/id</span>
+      <span class="tag t-write">writes</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Edges</span>
+      <span class="edge-key"><svg width="34" height="8"><path d="M0 4H30" stroke="var(--edge)" stroke-width="1.5" fill="none"/></svg>calls</span>
+      <span class="edge-key"><svg width="34" height="8"><path d="M0 4H30" stroke="var(--edge)" stroke-width="1.5" stroke-dasharray="2 3" fill="none"/></svg>reads data</span>
+      <span class="edge-key"><svg width="34" height="8"><path d="M0 4H30" stroke="var(--write)" stroke-width="1.5" stroke-dasharray="5 4" fill="none"/></svg>writes data</span>
+    </div>
+    <div class="row" id="paths"><span class="row-label">Trace</span></div>
+  </section>
+
+  <div class="scroller"><div class="map" id="map"><svg class="edges" id="edges" aria-hidden="true"></svg></div></div>
+
+  <section class="detail" id="detail" aria-live="polite"></section>
+
+  <section class="types">
+    <h2>Types</h2>
+    <div class="tgrid" id="types"></div>
+  </section>
+</div>
+
+<script>
+const COLS = [
+  ["Callers", "who asks"],
+  ["ReadRepository / WriteRepository", "radicle::storage"],
+  ["Repository internals", "radicle::storage::git"],
+  ["Identity COB", "cob::identity · radicle-cob"],
+  ["Git data", "refs and blobs"],
+];
+
+// id: [col, name, kind, location, description, tags]
+const N = {
+  ops: [0, "Patch and issue apply", "caller", "cob::patch · cob::issue",
+    "Each operation names an identity commit in its Rad-Resource trailer. Apply asks Op::identity_doc for that document to decide what the author may do. This runs once per operation.", []],
+  op_doc: [0, "Op::identity_doc", "fn", "cob::op",
+    "Returns None when the operation has no identity. Otherwise calls identity_doc_at with the cited commit. A forged or unaccepted commit gives IdentityDocError::UnacceptedRevision, so the operation is rejected.", ["checked"]],
+  misc: [0, "delegates(), project(), sync, CLI reads", "caller", "many modules",
+    "Most code wants the current document and calls identity_doc.", []],
+  push: [0, "Remote helper push", "caller", "radicle-remote-helper · push",
+    "Reads identity() for the canonical ref rules. It clones the document so it does not hold the Ref<Identity> borrow while it writes patches.", []],
+  node_fetch: [0, "Node fetch worker", "caller", "radicle-node · worker::fetch",
+    "After a fetch, calls set_identity_head to move rad/id to the computed head. Then reads identity() to set canonical refs.", []],
+  cli_cache: [0, "rad id cache", "caller", "radicle-cli · commands::id",
+    "Recomputes the canonical head and writes it to rad/id. This is the manual repair for a stale rad/id.", []],
+  cli_write: [0, "rad id accept / update, rad publish", "caller", "radicle-cli · commands::id, commands::publish",
+    "Gets an IdentityMut, writes a COB change, then moves rad/id itself with set_identity_head_to(identity.current). Forgetting this step leaves rad/id stale.", ["write"]],
+  fetch_stage: [0, "radicle-fetch stages", "caller", "radicle-fetch · handle::verified, stage::CanonicalId",
+    "During a clone, the local identity history does not exist yet, so delegates are found from the fetched rad/id with Doc::load_at and no acceptance check. The repository is validated after the refs are fetched.", ["unchecked"]],
+
+  identity_doc: [1, "identity_doc()", "trait fn → DocAt", "ReadRepository",
+    "The current document. Gets the head from identity_head (normally rad/id), then checks it with identity_doc_at. A stale rad/id still passes, because an old head is still an accepted revision.", ["checked", "radid"]],
+  identity_doc_at: [1, "identity_doc_at(oid)", "trait fn → DocAt", "ReadRepository · impl in storage::git",
+    "Returns the document only if oid is an accepted revision of the evaluated identity COB. The document comes from the cached Revision, not from the commit tree. Errors: UnacceptedRevision, or Repository when loading fails.", ["checked", "cached"]],
+  identity: [1, "identity()", "trait fn → Ref<Identity>", "ReadRepository",
+    "Finds the COB root with identity_root, then borrows the evaluated identity from identity_from. The result is a RefCell borrow of the cache.", ["cached"]],
+  canonical_identity_doc: [1, "canonical_identity_doc()", "trait fn → DocAt", "ReadRepository",
+    "Computes the head from the COB with canonical_identity_head, then reads the document with Doc::load_at. No acceptance check is needed because the head comes from the COB. Can be ahead of rad/id.", ["unchecked"]],
+  set_identity_head: [1, "set_identity_head()", "trait fn", "WriteRepository",
+    "Computes canonical_identity_head and writes it to rad/id. Used after fetch and by rad id cache.", ["write"]],
+  set_identity_head_to: [1, "set_identity_head_to(oid)", "trait fn", "WriteRepository · impl in storage::git",
+    "Writes any commit to rad/id with no check. The CLI calls it after each identity write.", ["write"]],
+
+  identity_head: [2, "identity_head()", "fn → Oid", "storage::git::Repository",
+    "Reads rad/id. When the ref is missing, falls back to canonical_identity_head.", ["radid"]],
+  identity_root: [2, "identity_root()", "fn → Oid", "storage::git::Repository",
+    "Walks back from rad/id to the root commit. Caches the result, keyed by the rad/id oid, so a repeat call costs one ref read.", ["radid", "cached"]],
+  cache_root: [2, "cached_identity_root", "field: Cell<Option<CachedIdentityRoot>>", "storage::git::Repository",
+    "One per Repository handle. Maps the rad/id oid to the root commit.", ["cached"]],
+  identity_from: [2, "identity_from(root)", "trait fn → Ref<Identity>", "ReadRepository · impl in storage::git",
+    "Lists the identity COB refs of all remotes on every call. If the root and the set of tips match the cache, it returns the cached Identity. If not, it evaluates the COB with get_from_objects and replaces the cache with borrow_mut. That borrow_mut panics if a caller still holds an earlier Ref.", ["cached", "eval"]],
+  cache_identity: [2, "cached_identity", "field: RefCell<Option<CachedIdentity>>", "storage::git::Repository",
+    "One per Repository handle, so a new handle starts empty. Key: the root and the set of COB tips. A write through another handle changes the tips and so misses the cache.", ["cached"]],
+  canonical_identity_head: [2, "canonical_identity_head()", "trait fn → Oid", "ReadRepository · impl in storage::git",
+    "Ignores rad/id. Reads the root document from the RID blob, finds the founder's rad/root (or falls back to identity_root), checks that Doc::load_at(root) matches the RID, then returns identity_from(root).head().", ["cached"]],
+
+  get_from_objects: [3, "get_from_objects", "fn", "radicle_cob::object::collaboration",
+    "Builds the change graph from refs the caller already has and evaluates it. Added so identity_from can evaluate the same snapshot of refs it used as the cache key.", ["eval"]],
+  apply: [3, "Identity::apply (Revision)", "COB evaluation", "cob::identity",
+    "For each Revision action: reads embeds/radicle.json from the revision commit with Doc::blob_at, and rejects it with DocMismatch if it differs from the signed blob. Then checks the parent, delegate rights and signature, and sets the state.", []],
+  identity_get: [3, "Identity::load / Identity::get", "fn → Identity", "cob::identity",
+    "Evaluates the whole COB through cob::get, with no cache. Still used by load_mut and get_mut.", ["eval"]],
+  load_mut: [3, "Identity::load_mut / get_mut", "fn → IdentityMut", "cob::identity",
+    "Evaluates the identity with Identity::get and wraps it in an IdentityMut for writing.", ["eval"]],
+  identity_mut: [3, "IdentityMut::accept / update / reject …", "methods", "cob::identity",
+    "Writes a COB change and updates the in-memory Identity, including current. Does not touch rad/id: the caller must move it.", ["write"]],
+  doc_load_at: [3, "Doc::load_at / Doc::blob_at", "fn → DocAt", "identity::doc",
+    "Reads the document from a commit's tree. Does not check that the commit belongs to the identity, so use it only for a trusted commit.", ["unchecked"]],
+
+  ref_rad_id: [4, "refs/rad/id", "ref", "storage",
+    "A cached pointer to the current identity head. Written by set_identity_head and set_identity_head_to. Read by identity_head and identity_root. The acceptance check does not depend on it.", []],
+  cob_refs: [4, "…/refs/cobs/xyz.radicle.id/<root>", "refs, one per remote", "refs/namespaces/<nid>/",
+    "Each remote's tip of the identity COB. The set of tips is the cache key in identity_from.", []],
+  tree_blob: [4, "embeds/radicle.json", "blob in each revision commit", "identity commit tree",
+    "The document blob. DocMismatch makes it equal to the signed blob, so the cached Revision doc and Doc::load_at agree.", []],
+};
+
+// [from, to, kind] kind: c = call, r = reads data, w = writes data
+const E = [
+  ["ops","op_doc","c"], ["op_doc","identity_doc_at","c"],
+  ["misc","identity_doc","c"], ["push","identity","c"],
+  ["node_fetch","set_identity_head","c"], ["node_fetch","identity","c"],
+  ["cli_cache","set_identity_head","c"],
+  ["cli_write","load_mut","c"], ["cli_write","set_identity_head_to","c"],
+  ["fetch_stage","doc_load_at","c"],
+  ["identity_doc","identity_head","c"], ["identity_doc","identity_doc_at","c"],
+  ["identity_doc_at","identity","c"],
+  ["identity","identity_root","c"], ["identity","identity_from","c"],
+  ["canonical_identity_doc","canonical_identity_head","c"], ["canonical_identity_doc","doc_load_at","c"],
+  ["set_identity_head","canonical_identity_head","c"], ["set_identity_head","set_identity_head_to","c"],
+  ["set_identity_head_to","ref_rad_id","w"],
+  ["identity_head","ref_rad_id","r"], ["identity_head","canonical_identity_head","c"],
+  ["identity_root","ref_rad_id","r"], ["identity_root","cache_root","r"],
+  ["identity_from","cob_refs","r"], ["identity_from","cache_identity","r"], ["identity_from","get_from_objects","c"],
+  ["canonical_identity_head","identity_from","c"], ["canonical_identity_head","doc_load_at","c"],
+  ["get_from_objects","apply","c"], ["identity_get","apply","c"],
+  ["load_mut","identity_get","c"], ["load_mut","identity_mut","c"],
+  ["identity_mut","cob_refs","w"],
+  ["apply","tree_blob","r"], ["doc_load_at","tree_blob","r"],
+];
+
+const PATHS = [
+  { name: "Patch op cites an identity", note: "This is the forged-identity check. Steps 7–9 run only on a cache miss: the first call on a handle, or after the identity COB tips change. Step 5 runs on every call, once per operation.",
+    steps: [
+      ["ops","op_doc","Patch or issue apply reads the op's identity commit and calls Op::identity_doc."],
+      ["op_doc","identity_doc_at","It calls identity_doc_at with the cited commit."],
+      ["identity_doc_at","identity","identity_doc_at borrows the evaluated identity."],
+      ["identity","identity_root","identity() finds the COB root from rad/id (cached by rad/id oid)."],
+      ["identity","identity_from","identity_from lists the identity COB refs of every remote."],
+      ["identity_from","cache_identity","If the root and tips match the cache, the cached Identity is returned."],
+      ["identity_from","get_from_objects","On a miss, the COB is evaluated from those refs."],
+      ["get_from_objects","apply","Each revision is applied: parent, delegate, signature, and the DocMismatch check."],
+      ["apply","tree_blob","Apply reads embeds/radicle.json from each revision commit."],
+      [null,null,"Back in identity_doc_at: if the commit is not an accepted revision, return UnacceptedRevision. Otherwise return the cached Revision's doc as a DocAt."],
+    ], extra: [["identity_root","ref_rad_id"],["identity_root","cache_root"],["identity_from","cob_refs"]] },
+  { name: "Read the current doc", note: "The head comes from rad/id, so a stale rad/id gives the previous accepted document. It still passes the check, because it is an accepted revision.",
+    steps: [
+      ["misc","identity_doc","A caller asks for the current document."],
+      ["identity_doc","identity_head","identity_doc gets the head."],
+      ["identity_head","ref_rad_id","identity_head reads rad/id (or computes the canonical head if the ref is missing)."],
+      ["identity_doc","identity_doc_at","The head is checked with identity_doc_at."],
+      ["identity_doc_at","identity","From here on, the same cached path as a patch op."],
+    ], extra: [["identity","identity_from"],["identity","identity_root"],["identity_from","cache_identity"],["identity_from","cob_refs"]] },
+  { name: "Recompute rad/id after fetch", note: "This path ignores the current rad/id and derives the head from the COB, so it also repairs a rad/id that a CLI command forgot to move.",
+    steps: [
+      ["node_fetch","set_identity_head","After a fetch, the node calls set_identity_head."],
+      ["set_identity_head","canonical_identity_head","The head is computed from the COB."],
+      ["canonical_identity_head","doc_load_at","The root document is loaded and checked against the RID."],
+      ["canonical_identity_head","identity_from","identity_from(root).head() gives the current revision (cached)."],
+      ["set_identity_head","set_identity_head_to","The computed head is written."],
+      ["set_identity_head_to","ref_rad_id","rad/id now points at the current revision."],
+    ], extra: [["identity_from","cob_refs"],["identity_from","cache_identity"],["cli_cache","set_identity_head"]] },
+  { name: "Accept a revision", note: "IdentityMut writes the COB but leaves rad/id alone. The CLI must do step 5 itself, using identity.current, which can be a queued child that the accept adopted.",
+    steps: [
+      ["cli_write","load_mut","rad id accept loads an IdentityMut."],
+      ["load_mut","identity_get","load_mut evaluates the identity with no cache."],
+      ["load_mut","identity_mut","It wraps the result in an IdentityMut."],
+      ["identity_mut","cob_refs","accept() writes a COB change, which moves this node's identity COB tip."],
+      ["cli_write","set_identity_head_to","The CLI calls set_identity_head_to(identity.current)."],
+      ["set_identity_head_to","ref_rad_id","rad/id moves to the new current revision."],
+    ], extra: [["identity_get","apply"]] },
+  { name: "Clone bootstrap", note: "No local accepted history exists yet, so nothing can be checked. The fetched refs are validated later.",
+    steps: [
+      ["fetch_stage","doc_load_at","radicle-fetch reads the document at the fetched rad/id with Doc::load_at."],
+      ["doc_load_at","tree_blob","It reads embeds/radicle.json from that commit, with no acceptance check."],
+    ], extra: [] },
+];
+
+const TYPES = [
+  ["DocAt", "struct DocAt {\n  commit: Oid,\n  blob:   Oid,\n  doc:    Doc,\n}", "A document and where it came from. Returned by identity_doc, identity_doc_at, canonical_identity_doc and Doc::load_at. The type does not say whether the commit was checked."],
+  ["Identity", "struct Identity {\n  current:   RevisionId, // head()\n  root:      RevisionId,\n  revisions: HashMap<RevisionId, Revision>,\n  timeline:  Vec<EntryId>,\n}", "The evaluated identity COB. revision(id) looks up any revision; current is the adopted head that rad/id should match."],
+  ["Revision", "struct Revision {\n  id:     RevisionId,\n  parent: Option<RevisionId>,\n  state:  State,\n  doc:    Doc,\n  blob:   Oid,\n  …\n}", "is_accepted() means state == Accepted. identity_doc_at builds its DocAt from id, blob and doc."],
+  ["IdentityMut", "struct IdentityMut<'a, 'b, Repo, Signer> {\n  id:       ObjectId,\n  identity: Identity,\n  store:    Store<…>,\n}", "Derefs to Identity. Its writes update identity.current but never rad/id."],
+  ["Ref<'_, Identity>", "std::cell::Ref<'_, Identity>", "What identity() and identity_from() return: a borrow of the handle's cache. Drop it before a call that could refresh the cache, or borrow_mut panics."],
+  ["CachedIdentity", "struct CachedIdentity {\n  root:     ObjectId,\n  tips:     BTreeSet<Oid>,\n  identity: Identity,\n}", "Private to storage::git. Held in RefCell<Option<_>> on each Repository."],
+  ["CachedIdentityRoot", "struct CachedIdentityRoot {\n  head: Oid, // rad/id when resolved\n  root: Oid,\n}", "Private to storage::git. Held in Cell<Option<_>>, so identity_root skips the revwalk while rad/id is unchanged."],
+  ["IdentityDocError", "enum IdentityDocError {\n  Repository(Box<RepositoryError>),\n  Doc(DocError),\n  UnacceptedRevision(Oid),\n}", "New in this patch. Returned by identity_doc and identity_doc_at. RepositoryError has an IdentityDoc(IdentityDocError) variant, so the two types nest in both directions."],
+  ["ApplyError::DocMismatch", "DocMismatch {\n  signed:   Oid,\n  embedded: Oid,\n}", "Raised during COB evaluation when a revision commit's embeds/radicle.json differs from the blob the delegates signed."],
+];
+
+const TAGTXT = { checked: "checked", unchecked: "unchecked", cached: "cached", eval: "full eval", radid: "reads rad/id", write: "writes" };
+const TAGCLS = { checked: "t-checked", unchecked: "t-unchecked", cached: "t-cached", eval: "t-eval", radid: "t-radid", write: "t-write" };
+const DATA = new Set(["ref_rad_id", "cob_refs", "tree_blob", "cache_root", "cache_identity"]);
+
+const map = document.getElementById("map");
+const svg = document.getElementById("edges");
+const detail = document.getElementById("detail");
+const el = {};
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+COLS.forEach(([title, sub], i) => {
+  const col = document.createElement("div");
+  col.className = "col";
+  col.innerHTML = `<div class="col-head"><h3>${esc(title)}</h3><span>${esc(sub)}</span></div>`;
+  for (const [id, [c, name, kind, , , tags]] of Object.entries(N)) {
+    if (c !== i) continue;
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "node" + (c === 0 ? " caller" : "") + (DATA.has(id) ? " data" : "");
+    b.dataset.id = id;
+    b.innerHTML = `<span class="step"></span><span class="name">${esc(name)}</span><span class="kind">${esc(kind)}</span>` +
+      (tags.length ? `<span class="tags">${tags.map(t => `<span class="tag ${TAGCLS[t]}">${TAGTXT[t]}</span>`).join("")}</span>` : "");
+    b.addEventListener("click", () => selectNode(id));
+    col.appendChild(b);
+    el[id] = b;
+  }
+  map.appendChild(col);
+});
+
+const NS = "http://www.w3.org/2000/svg";
+const paths = {};
+function key(a, b) { return a + ">" + b; }
+
+function draw() {
+  const m = map.getBoundingClientRect();
+  svg.setAttribute("viewBox", `0 0 ${m.width} ${m.height}`);
+  svg.innerHTML = `<defs>
+    <marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L8 4L0 8z" class="arrow-fill"/></marker>
+    <marker id="ahw" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L8 4L0 8z" style="fill:var(--write)"/></marker>
+    <marker id="aha" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L8 4L0 8z" style="fill:var(--accent)"/></marker>
+  </defs>`;
+  for (const [a, b, k] of E) {
+    const ra = el[a].getBoundingClientRect(), rb = el[b].getBoundingClientRect();
+    const ca = N[a][0], cb = N[b][0];
+    let d;
+    if (cb > ca) {
+      const x1 = ra.right - m.left, y1 = ra.top + ra.height / 2 - m.top;
+      const x2 = rb.left - m.left - 2, y2 = rb.top + rb.height / 2 - m.top;
+      const dx = Math.max(30, (x2 - x1) / 2);
+      d = `M${x1} ${y1} C${x1 + dx} ${y1} ${x2 - dx} ${y2} ${x2} ${y2}`;
+    } else {
+      // Same column: loop out to the right gutter.
+      const x1 = ra.right - m.left, y1 = ra.top + ra.height / 2 - m.top;
+      const x2 = rb.right - m.left + 2, y2 = rb.top + rb.height / 2 - m.top;
+      const bulge = Math.min(54, 16 + Math.abs(y2 - y1) / 6);
+      const xm = Math.max(x1, x2) + bulge;
+      d = `M${x1} ${y1} C${xm} ${y1} ${xm} ${y2} ${x2} ${y2}`;
+    }
+    const p = document.createElementNS(NS, "path");
+    p.setAttribute("d", d);
+    p.setAttribute("class", "e" + (k === "w" ? " w" : k === "r" ? " r" : ""));
+    p.setAttribute("marker-end", k === "w" ? "url(#ahw)" : "url(#ah)");
+    svg.appendChild(p);
+    paths[key(a, b)] = p;
+  }
+  applyState();
+}
+
+let state = { node: null, path: null };
+
+function clearMarks() {
+  map.classList.remove("focus");
+  for (const b of Object.values(el)) { b.classList.remove("on", "sel", "has-step"); b.querySelector(".step").textContent = ""; }
+  for (const [k, p] of Object.entries(paths)) {
+    p.classList.remove("on");
+    p.setAttribute("marker-end", p.classList.contains("w") ? "url(#ahw)" : "url(#ah)");
+  }
+}
+function light(a, b) {
+  const p = paths[key(a, b)];
+  if (!p) return;
+  p.classList.add("on");
+  if (!p.classList.contains("w")) p.setAttribute("marker-end", "url(#aha)");
+  el[a].classList.add("on"); el[b].classList.add("on");
+}
+
+function applyState() {
+  clearMarks();
+  if (state.node) {
+    const id = state.node;
+    map.classList.add("focus");
+    el[id].classList.add("on", "sel");
+    for (const [a, b] of E) if (a === id || b === id) light(a, b);
+  } else if (state.path !== null) {
+    const P = PATHS[state.path];
+    map.classList.add("focus");
+    for (const [a, b] of P.extra) light(a, b);
+    P.steps.forEach(([a, b], i) => {
+      if (!a) return;
+      light(a, b);
+      for (const n of [a]) {
+        const s = el[n].querySelector(".step");
+        s.textContent = s.textContent ? s.textContent + "," + (i + 1) : String(i + 1);
+        el[n].classList.add("has-step");
+      }
+    });
+  }
+}
+
+function chipList(ids) {
+  if (!ids.length) return `<span class="sub" style="font-size:13px">nothing</span>`;
+  return ids.map(id => `<button type="button" class="chip" data-go="${id}">${esc(N[id][1])}</button>`).join("");
+}
+
+function renderNode(id) {
+  const [, name, kind, loc, desc, tags] = N[id];
+  const out = E.filter(e => e[0] === id).map(e => e[1]);
+  const inc = E.filter(e => e[1] === id).map(e => e[0]);
+  detail.innerHTML = `
+    <div class="row" style="gap:10px"><h2>${esc(name)}</h2>${tags.map(t => `<span class="tag ${TAGCLS[t]}">${TAGTXT[t]}</span>`).join("")}</div>
+    <div class="loc">${esc(kind)} · ${esc(loc)}</div>
+    <p>${esc(desc)}</p>
+    <div class="links"><div><h4>Calls or touches</h4>${chipList(out)}</div><div><h4>Used by</h4>${chipList(inc)}</div></div>`;
+}
+function renderPath(i) {
+  const P = PATHS[i];
+  detail.innerHTML = `<h2 style="font-family:var(--f-head)">${esc(P.name)}</h2>
+    <ol class="steps">${P.steps.map(s => `<li>${esc(s[2])}</li>`).join("")}</ol>
+    <p class="note">${esc(P.note)}</p>`;
+}
+function renderIntro() {
+  detail.innerHTML = `<h2 style="font-family:var(--f-head)">Start here</h2>
+    <p>The key split is between the two document readers. <code>identity_doc_at</code> checks that a commit is an accepted revision of the evaluated identity COB. <code>Doc::load_at</code> reads any commit's tree with no check. After this patch, <code>rad/id</code> is only a pointer to the current head; the acceptance check never reads it.</p>
+    <p class="note">Pick a path above, or select any node. Select it again to clear the selection.</p>`;
+}
+
+function selectNode(id) {
+  setPathButtons(null);
+  state = state.node === id ? { node: null, path: null } : { node: id, path: null };
+  state.node ? renderNode(id) : renderIntro();
+  applyState();
+}
+function selectPath(i) {
+  state = state.path === i ? { node: null, path: null } : { node: null, path: i };
+  setPathButtons(state.path);
+  state.path !== null ? renderPath(i) : renderIntro();
+  applyState();
+}
+const pathRow = document.getElementById("paths");
+const pbtn = PATHS.map((P, i) => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "path"; b.textContent = P.name; b.setAttribute("aria-pressed", "false");
+  b.addEventListener("click", () => selectPath(i));
+  pathRow.appendChild(b);
+  return b;
+});
+function setPathButtons(i) { pbtn.forEach((b, j) => b.setAttribute("aria-pressed", String(i === j))); }
+
+detail.addEventListener("click", e => {
+  const go = e.target.closest("[data-go]");
+  if (go) { state = { node: null, path: null }; selectNode(go.dataset.go); el[go.dataset.go].scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" }); }
+});
+
+document.getElementById("types").innerHTML = TYPES.map(([n, code, d]) =>
+  `<div class="tcard"><h3>${esc(n)}</h3><pre>${esc(code)}</pre><p>${esc(d)}</p></div>`).join("");
+
+state = { node: null, path: 0 };
+setPathButtons(0);
+renderPath(0);
+draw();
+new ResizeObserver(draw).observe(map);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+</script>
+
+</html>

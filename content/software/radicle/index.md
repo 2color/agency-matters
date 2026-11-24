@@ -32,6 +32,7 @@ Detailed notes on Radicle and Heartwood internals:
 - [[partial-replication|Partial Replication in Radicle]] - how refs sync, why a namespace is all-or-nothing, and why COB embeds could be filtered
 - [[content-moderation|Content Moderation in Radicle]] - the ten design questions behind seeding policy, block lists, and vouching
 - [[Orgs and actors]]
+- [[identity-lookup-map.html|Identity Lookup Map]] - interactive map of how heartwood resolves the identity document after patch `76d48a1`: checked vs. unchecked reads, the identity cache, and who writes `rad/id` ([artifact](https://claude.ai/artifact/NVDyR9dU4Wf2kwVxgsujdC))
 
 ## Getting Started
 
