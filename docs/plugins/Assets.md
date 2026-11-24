@@ -9,6 +9,8 @@ This plugin emits all non-Markdown static assets in your content folder (like im
 
 Note that all static assets will then be accessible through its path on your generated site, i.e: `host.me/path/to/static.pdf`
 
+Standalone HTML files in `content/` are also copied to `/static/` with their original filenames and folder paths. For example, `content/tools/example.html` is available at `/static/tools/example.html`. These files are served as-is, without the Quartz page layout.
+
 > [!note]
 > For information on how to add, remove or configure plugins, see the [[configuration#Plugins|Configuration]] page.
 
