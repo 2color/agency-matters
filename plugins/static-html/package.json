@@ -1,0 +1,13 @@
+{
+  "name": "agency-matters-static-html",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./index.js",
+  "quartz": {
+    "name": "static-html",
+    "displayName": "Static HTML",
+    "category": "emitter",
+    "version": "1.0.0",
+    "quartzVersion": ">=5.0.0"
+  }
+}
