@@ -29,11 +29,11 @@ test("publishes HTML files while respecting ignores and watch changes", async (t
   const emitter = StaticHtml()
   for await (const _ of emitter.emit(ctx, [], {})) {
   }
-  const published = path.join(output, "static", "nested folder", "page.html")
+  const published = path.join(output, "nested folder", "page.html")
   assert.equal(await fs.readFile(published, "utf8"), "<h1>Original</h1>")
-  assert.equal(await fs.readFile(path.join(output, "static", "top.HTML"), "utf8"), "top")
-  await assert.rejects(fs.access(path.join(output, "static", "private", "secret.html")))
-  await assert.rejects(fs.access(path.join(output, "static", "image.png")))
+  assert.equal(await fs.readFile(path.join(output, "top.HTML"), "utf8"), "top")
+  await assert.rejects(fs.access(path.join(output, "private", "secret.html")))
+  await assert.rejects(fs.access(path.join(output, "image.png")))
 
   const file = "nested folder/page.html"
   await fs.writeFile(path.join(directory, file), "<h1>Updated</h1>")
@@ -45,10 +45,30 @@ test("publishes HTML files while respecting ignores and watch changes", async (t
   }
   await assert.rejects(fs.access(published))
 
-  await fs.mkdir(path.join(root, "quartz", "static"), { recursive: true })
-  await fs.writeFile(path.join(root, "quartz", "static", "top.HTML"), "existing")
+  await fs.writeFile(path.join(output, "top.HTML"), "another emitter")
   await assert.rejects(async () => {
-    for await (const _ of emitter.emit(ctx, [], {})) {
+    for await (const _ of emitter.partialEmit(ctx, [], {}, [])) {
     }
-  }, /Cannot publish top\.HTML/)
+  }, /changed by another emitter/)
+  assert.equal(await fs.readFile(path.join(output, "top.HTML"), "utf8"), "another emitter")
+})
+
+test("rejects output collisions without overwriting existing files", async (t) => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "quartz-static-html-collision-"))
+  t.after(() => fs.rm(root, { recursive: true, force: true }))
+  const directory = path.join(root, "content")
+  const output = path.join(root, "public")
+  await fs.mkdir(directory)
+  await fs.mkdir(output)
+  await fs.writeFile(path.join(directory, "page.html"), "standalone")
+  await fs.writeFile(path.join(output, "page.html"), "generated")
+  const ctx = {
+    argv: { directory, output },
+    cfg: { configuration: { ignorePatterns: [] } },
+  }
+  await assert.rejects(async () => {
+    for await (const _ of StaticHtml().emit(ctx, [], {})) {
+    }
+  }, /already exists/)
+  assert.equal(await fs.readFile(path.join(output, "page.html"), "utf8"), "generated")
 })
